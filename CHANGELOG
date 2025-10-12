@@ -9,3 +9,11 @@
 - Basic project structure and documentation.
 - README file with setup instructions.
 - .gitignore file to exclude unnecessary files from version control.
+
+### Added
+- Bcrypt utilities for secure password hashing.
+- CORS configuration to allow requests from the frontend.
+- Nodemailer setup for sending emails.
+- Error handling middleware for consistent error responses.
+- Validation middleware for request data validation.
+- Utility functions for token generation and email sending.
