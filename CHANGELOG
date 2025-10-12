@@ -1,0 +1,11 @@
+# CHANGELOG
+<!-- Latest on top -->
+
+## [1.0.0] - 2025-10-12
+### Added
+- Initial release of the MossBros backend with PostgreSQL and Redis services.
+- Docker Compose setup for easy deployment.
+- Environment configuration for database connection.
+- Basic project structure and documentation.
+- README file with setup instructions.
+- .gitignore file to exclude unnecessary files from version control.
