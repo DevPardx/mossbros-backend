@@ -8,5 +8,5 @@ export class AuthController {
         const response = await AuthService.login({ email, password, rememberMe });
 
         return res.status(200).json(response);
-    }
+    };
 }

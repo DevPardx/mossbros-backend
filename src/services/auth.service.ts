@@ -3,7 +3,7 @@ import { User } from "../entities/User.entity";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
 import { Login } from "../types";
 import { comparePassword } from "../utils/bcrypt";
-import { generateJWT } from '../utils/token';
+import { generateJWT } from "../utils/token";
 
 export class AuthService {
     static readonly userRepository = AppDataSource.getRepository(User);
@@ -35,5 +35,5 @@ export class AuthService {
 
             throw new InternalServerError("An error occurred while logging in the user");
         }
-    }
+    };
 }
