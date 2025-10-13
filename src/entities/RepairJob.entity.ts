@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, ManyToMany, JoinColumn, JoinTable } from "typeorm";
 import { Motorcycle } from "./Motorcycle.entity";
 import { Service } from "./Service.entity";
-import { RepairStatus } from "../enums/RepairStatus";
+import { RepairStatus } from "../enums";
 
 @Entity("repair_jobs")
 export class RepairJob {
