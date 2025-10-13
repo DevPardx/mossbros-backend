@@ -6,3 +6,7 @@ export enum RepairStatus {
   COMPLETED = "completed",
   CANCELLED = "cancelled"
 }
+
+export enum UserRole {
+  OWNER = "owner"
+}

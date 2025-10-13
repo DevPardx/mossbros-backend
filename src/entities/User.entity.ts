@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { UserRole } from "../enums";
 
 @Entity("users")
 export class User {
@@ -17,8 +18,8 @@ export class User {
   @Column({ type: "varchar", length: 15, nullable: true })
   phone: string;
 
-  @Column({ type: "varchar", length: 50, default: "owner" })
-  role: string;
+  @Column({ type: "enum", enum: UserRole, default: UserRole.OWNER })
+  role: UserRole;
 
   @Column({ type: "boolean", default: true })
   is_active: boolean;
