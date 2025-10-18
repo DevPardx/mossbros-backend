@@ -1,6 +1,29 @@
 # CHANGELOG
 <!-- Latest on top -->
 
+## [1.1.0] - 2025-10-17
+### Added
+- Cookie-based authentication system with HTTP-only cookies for enhanced security
+- JWT token verification functionality for protected routes
+- Authentication middleware for verifying JWT tokens from cookies
+- Cookie parser middleware integration for handling cookies
+- Logout functionality to clear authentication cookies
+- Token verification endpoint to validate user authentication status
+- Enhanced CORS configuration with credentials support
+- Support for "Remember Me" functionality with extended token expiration
+
+### Changed
+- Modified login endpoint to set HTTP-only cookies instead of returning JWT tokens directly
+- Updated authentication service to include token verification method
+- Enhanced token utilities with JWT verification function
+- Improved authentication controller with logout and verify methods
+- Updated authentication routes with new logout and verify endpoints
+- Modified CORS configuration to support credentials for cookie-based authentication
+
+### Dependencies
+- Added `cookie-parser` package for cookie handling
+- Added `@types/cookie-parser` for TypeScript support
+
 ## [1.0.0] - 2025-10-12
 ### Added
 - Initial release of the MossBros backend with PostgreSQL and Redis services.
