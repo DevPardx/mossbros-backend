@@ -1,9 +1,9 @@
 import { AppDataSource } from "../config/typeorm";
 import { User } from "../entities/User.entity";
-import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
+import { AppError, BadRequestError, InternalServerError, NotFoundError, UnauthorizedError } from "../handler/error.handler";
 import { Login } from "../types";
 import { comparePassword } from "../utils/bcrypt";
-import { generateJWT } from "../utils/token";
+import { generateJWT, verifyJWT } from "../utils/token";
 
 export class AuthService {
     static readonly userRepository = AppDataSource.getRepository(User);
@@ -34,6 +34,34 @@ export class AuthService {
             }
 
             throw new InternalServerError("An error occurred while logging in the user");
+        }
+    };
+
+    static verify = async (token: string) => {
+        try {
+            const decoded = verifyJWT(token);
+
+            if (!decoded) {
+                throw new UnauthorizedError("Invalid or expired token");
+            }
+
+            const user = await this.userRepository.findOneBy({ id: decoded.id });
+
+            if (!user) {
+                throw new NotFoundError("User not found");
+            }
+
+            return {
+                id: user.id,
+                email: user.email,
+                name: user.name
+            };
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+
+            throw new InternalServerError("An error occurred while verifying the token");
         }
     };
 }
