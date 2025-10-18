@@ -7,10 +7,11 @@ export const generateJWT = (id: string, rememberMe: boolean = false) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn });
 };
 
+
 export const verifyJWT = (token: string) => {
     try {
         return jwt.verify(token, process.env.JWT_SECRET) as { id: string };
-    } catch (error) {
+    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
         return null;
     }
 };
