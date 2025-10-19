@@ -4,14 +4,12 @@ import { Customer } from "../../entities/Customer.entity";
 export async function seedCustomers() {
     const customerRepository = AppDataSource.getRepository(Customer);
 
-    // Check if customers already exist
     const existingCustomers = await customerRepository.count();
     if (existingCustomers > 0) {
         console.log("Customers already seeded");
         return;
     }
 
-    // Customer data with realistic Salvadoran names and phone numbers
     const customersData = [
         {
             name: "Jorge Pardo",
@@ -136,11 +134,9 @@ export async function seedCustomers() {
         }
     ];    console.log("Creating customers...");
 
-    // Create customers
     const customers = customerRepository.create(customersData);
     const savedCustomers = await customerRepository.save(customers);
 
-    // Log results
     savedCustomers.forEach((customer) => {
         console.log(`✅ Created customer: ${customer.name} - ${customer.phone}`);
     });

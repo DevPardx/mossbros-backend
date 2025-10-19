@@ -6,14 +6,12 @@ export async function seedModels() {
     const modelRepository = AppDataSource.getRepository(Model);
     const brandRepository = AppDataSource.getRepository(Brand);
 
-    // Check if models already exist
     const existingModels = await modelRepository.count();
     if (existingModels > 0) {
         console.log("Models already seeded");
         return;
     }
 
-    // Get all brands to associate models
     const brands = await brandRepository.find();
     
     if (brands.length === 0) {
@@ -21,7 +19,6 @@ export async function seedModels() {
         return;
     }
 
-    // Find specific brands
     const serpento = brands.find(b => b.name === "Serpento");
     const freedom = brands.find(b => b.name === "Freedom");
     const yamaha = brands.find(b => b.name === "Yamaha");
@@ -35,7 +32,6 @@ export async function seedModels() {
 
     const models = [];
 
-    // Serpento Models
     if (serpento) {
         models.push(
             { name: "RT 200", brand_id: serpento.id, is_active: true },
@@ -44,7 +40,6 @@ export async function seedModels() {
         );
     }
 
-    // Freedom Models  
     if (freedom) {
         models.push(
             { name: "Rider 200", brand_id: freedom.id, is_active: true },
@@ -53,7 +48,6 @@ export async function seedModels() {
         );
     }
 
-    // Yamaha Models
     if (yamaha) {
         models.push(
             { name: "YZF-R1", brand_id: yamaha.id, is_active: true },
@@ -65,7 +59,6 @@ export async function seedModels() {
         );
     }
 
-    // Honda Models
     if (honda) {
         models.push(
             { name: "CBR600RR", brand_id: honda.id, is_active: true },
@@ -77,7 +70,6 @@ export async function seedModels() {
         );
     }
 
-    // Hero Models
     if (hero) {
         models.push(
             { name: "Splendor Plus", brand_id: hero.id, is_active: true },
@@ -88,7 +80,6 @@ export async function seedModels() {
         );
     }
 
-    // Benelli Models
     if (benelli) {
         models.push(
             { name: "TNT 300", brand_id: benelli.id, is_active: true },
@@ -99,7 +90,6 @@ export async function seedModels() {
         );
     }
 
-    // Kawasaki Models
     if (kawasaki) {
         models.push(
             { name: "Ninja ZX-10R", brand_id: kawasaki.id, is_active: true },
@@ -109,7 +99,6 @@ export async function seedModels() {
         );
     }
 
-    // Suzuki Models
     if (suzuki) {
         models.push(
             { name: "GSX-R1000", brand_id: suzuki.id, is_active: true },
@@ -119,7 +108,6 @@ export async function seedModels() {
         );
     }
 
-    // BMW Models
     if (bmw) {
         models.push(
             { name: "S1000RR", brand_id: bmw.id, is_active: true },
@@ -129,7 +117,6 @@ export async function seedModels() {
         );
     }
 
-    // Ducati Models
     if (ducati) {
         models.push(
             { name: "Panigale V4", brand_id: ducati.id, is_active: true },

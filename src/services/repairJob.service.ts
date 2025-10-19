@@ -11,7 +11,6 @@ export class RepairJobService {
     static readonly serviceRepository = AppDataSource.getRepository(Service);
     static readonly motorcycleRepository = AppDataSource.getRepository(Motorcycle);
 
-    // Workflow configuration
     static readonly WORKFLOW_RULES = {
         [RepairStatus.PENDING]: {
             allowed_transitions: [RepairStatus.IN_REPAIR, RepairStatus.CANCELLED],
@@ -53,7 +52,6 @@ export class RepairJobService {
 
     static create = async (data: CreateRepairJobType) => {
         try {
-            // Validate motorcycle exists
             const motorcycle = await this.motorcycleRepository.findOne({
                 where: { id: data.motorcycle_id },
                 relations: ["customer"]
@@ -63,22 +61,18 @@ export class RepairJobService {
                 throw new NotFoundError("Motocicleta no encontrada");
             }
 
-            // Validate services exist
             const services = await this.serviceRepository.findByIds(data.service_ids);
             if (services.length !== data.service_ids.length) {
                 throw new BadRequestError("Uno o más servicios no encontrados");
             }
 
-            // Calculate total cost
             const total_cost = services.reduce((sum, service) => sum + Number(service.price), 0);
 
-            // Estimate completion (1 day per service + complexity factor)
             const baseDays = services.length * 1;
             const complexityFactor = services.some(s => s.name.toLowerCase().includes("motor") || s.name.toLowerCase().includes("engine")) ? 2 : 1;
             const estimated_completion = new Date();
             estimated_completion.setDate(estimated_completion.getDate() + (baseDays * complexityFactor));
 
-            // Create repair job
             const repairJob = this.repairJobRepository.create({
                 motorcycle_id: data.motorcycle_id,
                 notes: data.notes,
@@ -158,7 +152,6 @@ export class RepairJobService {
                 throw new NotFoundError("Trabajo de reparación no encontrado");
             }
 
-            // Update fields
             if (data.notes !== undefined) repairJob.notes = data.notes;
             if (data.estimated_completion) {
                 repairJob.estimated_completion = new Date(data.estimated_completion);
@@ -187,13 +180,11 @@ export class RepairJobService {
                 throw new NotFoundError("Trabajo de reparación no encontrado");
             }
 
-            // Validate transition
             const currentWorkflow = this.WORKFLOW_RULES[repairJob.status];
             if (!currentWorkflow.allowed_transitions.includes(new_status)) {
                 throw new BadRequestError(`No se puede cambiar de ${repairJob.status} a ${new_status}`);
             }
 
-            // Update status and timestamps
             repairJob.status = new_status;
             
             if (new_status === RepairStatus.IN_REPAIR && !repairJob.started_at) {
@@ -289,7 +280,6 @@ export class RepairJobService {
                 throw new NotFoundError("Trabajo de reparación no encontrado");
             }
 
-            // Only allow deletion of PENDING or CANCELLED jobs
             if (![RepairStatus.PENDING, RepairStatus.CANCELLED].includes(repairJob.status)) {
                 throw new BadRequestError("Solo se pueden eliminar trabajos en estado pendiente o cancelado");
             }
@@ -326,7 +316,6 @@ export class RepairJobService {
                 this.repairJobRepository.count({ where: { status: RepairStatus.CANCELLED } })
             ]);
 
-            // Calculate total revenue from completed jobs
             const completedJobs = await this.repairJobRepository.find({
                 where: { status: RepairStatus.COMPLETED },
                 select: ["total_cost"]

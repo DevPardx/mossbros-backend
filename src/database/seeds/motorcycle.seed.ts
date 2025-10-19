@@ -10,14 +10,12 @@ export async function seedMotorcycles() {
     const brandRepository = AppDataSource.getRepository(Brand);
     const modelRepository = AppDataSource.getRepository(Model);
 
-    // Check if motorcycles already exist
     const existingMotorcycles = await motorcycleRepository.count();
     if (existingMotorcycles > 0) {
         console.log("Motorcycles already seeded");
         return;
     }
 
-    // Get all required entities from database
     const customers = await customerRepository.find();
     const brands = await brandRepository.find();
     const models = await modelRepository.find();
@@ -32,18 +30,16 @@ export async function seedMotorcycles() {
         return;
     }
 
-    // Helper function to get random brand and compatible model
     const getRandomBrandModel = () => {
         const randomBrand = brands[Math.floor(Math.random() * brands.length)];
         const compatibleModels = models.filter(m => m.brand_id === randomBrand.id);
         if (compatibleModels.length === 0) {
-            return getRandomBrandModel(); // Retry if no compatible models
+            return getRandomBrandModel();
         }
         const randomModel = compatibleModels[Math.floor(Math.random() * compatibleModels.length)];
         return { brand: randomBrand, model: randomModel };
     };
 
-    // Motorcycle plates data - Format: M + 6 digits (all motorcycles start with M)
     const motorcyclePlates = [
         "M195357", "M482951", "M739182", "M582746", "M947385",
         "M394857", "M682934", "M158472", "M529863", "M847295",
@@ -58,7 +54,6 @@ export async function seedMotorcycles() {
 
     const motorcycles = [];
     
-    // Create motorcycles for existing customers
     for (let i = 0; i < Math.min(customers.length, motorcyclePlates.length); i++) {
         const customer = customers[i];
         const { brand, model } = getRandomBrandModel();
@@ -79,10 +74,8 @@ export async function seedMotorcycles() {
         });
     }
 
-    // Save all motorcycles
     const savedMotorcycles = await motorcycleRepository.save(motorcycles.map(m => m.motorcycle));
 
-    // Log results
     motorcycles.forEach((item) => {
         console.log(`✅ Created motorcycle: ${item.motorcycle.plate} for ${item.customerName} - ${item.brandName} ${item.modelName}`);
     });

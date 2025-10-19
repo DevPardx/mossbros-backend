@@ -7,10 +7,8 @@ import { RepairStatus } from "../enums";
 
 const router = Router();
 
-// Apply authentication to all routes
 router.use(authenticate);
 
-// Create new repair job
 router.post("/",
     body("motorcycle_id")
         .isUUID()
@@ -33,7 +31,6 @@ router.post("/",
     RepairJobController.create
 );
 
-// Get all repair jobs with optional filters
 router.get("/",
     query("status")
         .optional()
@@ -47,12 +44,10 @@ router.get("/",
     RepairJobController.getAll
 );
 
-// Get repair job statistics
 router.get("/statistics",
     RepairJobController.getStatistics
 );
 
-// Get specific repair job
 router.get("/:id",
     param("id")
         .isUUID()
@@ -61,7 +56,6 @@ router.get("/:id",
     RepairJobController.getById
 );
 
-// Update repair job details
 router.put("/:id",
     param("id")
         .isUUID()
@@ -78,7 +72,6 @@ router.put("/:id",
     RepairJobController.update
 );
 
-// Update repair job status
 router.patch("/:id/status",
     param("id")
         .isUUID()
@@ -90,7 +83,6 @@ router.patch("/:id/status",
     RepairJobController.updateStatus
 );
 
-// Cancel repair job
 router.patch("/:id/cancel",
     param("id")
         .isUUID()
@@ -99,7 +91,6 @@ router.patch("/:id/cancel",
     RepairJobController.cancel
 );
 
-// Get workflow information
 router.get("/:id/workflow",
     param("id")
         .isUUID()
@@ -108,7 +99,6 @@ router.get("/:id/workflow",
     RepairJobController.getWorkflow
 );
 
-// Delete repair job (only PENDING or CANCELLED)
 router.delete("/:id",
     param("id")
         .isUUID()

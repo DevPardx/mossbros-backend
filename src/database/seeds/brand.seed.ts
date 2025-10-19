@@ -4,7 +4,6 @@ import { Brand } from "../../entities/Brand.entity";
 export async function seedBrands() {
     const brandRepository = AppDataSource.getRepository(Brand);
 
-    // Check if brands already exist
     const existingBrands = await brandRepository.count();
     if (existingBrands > 0) {
         console.log("Brands already seeded");
