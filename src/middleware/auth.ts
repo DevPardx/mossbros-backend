@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { AppDataSource } from "../config/typeorm";
 import jwt from "jsonwebtoken";
 import { User } from "../entities";
-import { BadRequestError } from "../handler/error.handler";
+import { BadRequestError, NotFoundError, UnauthorizedError } from "../handler/error.handler";
 
 /* eslint-disable @typescript-eslint/no-namespace */
 declare global {
@@ -20,14 +20,14 @@ export const verifyJwtCookie = async (req: Request, res: Response, next: NextFun
         const token = req.cookies.token;
         
         if (!token) {
-            throw new BadRequestError("No token provided");
+            throw new UnauthorizedError("No token provided");
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
 
         const user = await userRepository.findOneBy({ id: decoded.id });
         if (!user) {
-            throw new BadRequestError("User not found");
+            throw new NotFoundError("User not found");
         }
 
         req.user = user;
@@ -38,4 +38,35 @@ export const verifyJwtCookie = async (req: Request, res: Response, next: NextFun
         }
         throw new BadRequestError("Invalid token");
     }
+};
+
+export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
+    const bearer = req.headers.authorization;
+
+    if(!bearer){
+        throw new UnauthorizedError("Not Authorized");
+    }
+
+    const [ , token ] = bearer.split(" ");
+
+    if(!token){
+        throw new UnauthorizedError("Invalid token");
+    }
+
+    try{
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        if(typeof decoded === "object" && decoded.id){
+            const user = await AppDataSource.getRepository(User).findOne({
+                where: { id: decoded.id },
+                select: ["id", "email", "role", "phone"]
+            });
+            req.user = user;
+            next();
+        }
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    catch(error){
+        throw new UnauthorizedError("Not Authorized");
+    };
 };

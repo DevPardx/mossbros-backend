@@ -1,7 +1,28 @@
 # CHANGELOG
 <!-- Latest on top -->
 
-## [1.1.0] - 2025-10-17
+## [1.0.0] - 2025-10-18
+### Added
+- Complete CRUD API for Brand management with authentication protection
+- Complete CRUD API for Model management with authentication protection
+- Brand controller with create, read, update, and delete operations
+- Model controller with create, read, update, and delete operations
+- Brand service layer for database operations and business logic
+- Model service layer for database operations and business logic
+- Comprehensive validation for brand routes (name validation, URL validation)
+- Comprehensive validation for model routes with UUID parameter validation
+- Bearer token authentication middleware for API protection
+- Spanish localization for authentication error messages
+- TypeScript types for Brand and Model entities
+
+### Changed
+- Enhanced authentication middleware with Bearer token support
+- Updated authentication middleware error handling with proper HTTP status codes
+- Improved error messages in auth service with Spanish localization
+- Renamed `Login` type to `LoginType` for better naming consistency
+- Updated authentication middleware to use UnauthorizedError and NotFoundError instead of BadRequestError
+
+## [1.0.0] - 2025-10-17
 ### Added
 - Cookie-based authentication system with HTTP-only cookies for enhanced security
 - JWT token verification functionality for protected routes

@@ -1,27 +1,27 @@
 import { AppDataSource } from "../config/typeorm";
 import { User } from "../entities/User.entity";
 import { AppError, BadRequestError, InternalServerError, NotFoundError, UnauthorizedError } from "../handler/error.handler";
-import { Login } from "../types";
+import type { LoginType } from "../types";
 import { comparePassword } from "../utils/bcrypt";
 import { generateJWT, verifyJWT } from "../utils/token";
 
 export class AuthService {
     static readonly userRepository = AppDataSource.getRepository(User);
 
-    static login = async (data: Login) => {
+    static login = async (data: LoginType) => {
         try{
             const { email, password, rememberMe } = data;
 
             const user = await this.userRepository.findOneBy({ email });
 
             if(!user){
-                throw new NotFoundError("User not found");
+                throw new NotFoundError("Usuario no encontrado");
             }
 
             const checkPassword = await comparePassword(password, user.password);
 
             if(!checkPassword){
-                throw new BadRequestError("Invalid credentials");
+                throw new BadRequestError("Credenciales inválidas");
             }
 
             const token = generateJWT(user.id, rememberMe);
@@ -33,7 +33,7 @@ export class AuthService {
                 throw error;
             }
 
-            throw new InternalServerError("An error occurred while logging in the user");
+            throw new InternalServerError("Ocurrió un error al iniciar sesión");
         }
     };
 
@@ -42,13 +42,13 @@ export class AuthService {
             const decoded = verifyJWT(token);
 
             if (!decoded) {
-                throw new UnauthorizedError("Invalid or expired token");
+                throw new UnauthorizedError("Token inválido o expirado");
             }
 
             const user = await this.userRepository.findOneBy({ id: decoded.id });
 
             if (!user) {
-                throw new NotFoundError("User not found");
+                throw new NotFoundError("Usuario no encontrado");
             }
 
             return {
@@ -61,7 +61,7 @@ export class AuthService {
                 throw error;
             }
 
-            throw new InternalServerError("An error occurred while verifying the token");
+            throw new InternalServerError("Ocurrió un error al verificar el token");
         }
     };
 }
