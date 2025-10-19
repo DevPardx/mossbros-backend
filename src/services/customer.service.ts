@@ -55,7 +55,7 @@ export class CustomerService {
             });
             return customers;
         } catch (error) {
-            console.log(error)
+            console.log(error);
             throw new InternalServerError("Error al obtener clientes");
         }
     };
