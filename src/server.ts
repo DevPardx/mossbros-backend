@@ -8,6 +8,7 @@ import { AppDataSource } from "./config/typeorm";
 import authRoutes from "./routes/auth";
 import brandRoutes from "./routes/brands";
 import modelRoutes from "./routes/models";
+import customerRoutes from "./routes/customers";
 import { errorHandler } from "./middleware/error";
 import { runAllSeeds } from "./database/seeds";
 import { corsConfig } from "./config/cors";
@@ -37,6 +38,7 @@ app.use(cors(corsConfig));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/brands", brandRoutes);
 app.use("/api/v1/models", modelRoutes);
+app.use("/api/v1/customers", customerRoutes);
 
 app.use(errorHandler);
 

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, OneToMany, ManyToOne, JoinColumn } from "typeorm";
 import { Customer } from "./Customer.entity";
 import { RepairJob } from "./RepairJob.entity";
 import { Brand } from "./Brand.entity";
@@ -21,7 +21,7 @@ export class Motorcycle {
   @Column({ type: "uuid" })
   model_id: string;
 
-  @ManyToOne(() => Customer, (customer) => customer.motorcycles, {
+  @OneToOne(() => Customer, (customer) => customer.motorcycle, {
     onDelete: "CASCADE"
   })
   @JoinColumn({ name: "customer_id" })
