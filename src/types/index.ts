@@ -45,3 +45,33 @@ export type ServiceType = {
     price: number;
     is_active: boolean;
 }
+
+export type RepairJobType = {
+    id: string;
+    status: string;
+    notes?: string;
+    estimated_completion?: Date;
+    total_cost?: number;
+    motorcycle_id: string;
+    service_ids: string[];
+}
+
+export type CreateRepairJobType = {
+    motorcycle_id: string;
+    service_ids: string[];
+    notes?: string;
+    estimated_completion?: string;
+}
+
+export type UpdateRepairJobType = {
+    status?: string;
+    notes?: string;
+    estimated_completion?: string;
+}
+
+export type RepairJobWorkflowType = {
+    current_status: string;
+    allowed_transitions: string[];
+    can_cancel: boolean;
+    requires_confirmation: boolean;
+}

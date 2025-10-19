@@ -9,6 +9,7 @@ import brandRoutes from "./routes/brands";
 import modelRoutes from "./routes/models";
 import customerRoutes from "./routes/customers";
 import serviceRoutes from "./routes/services";
+import repairJobRoutes from "./routes/repairJobs";
 import { AppDataSource } from "./config/typeorm";
 import { errorHandler } from "./middleware/error";
 import { runAllSeeds } from "./database/seeds";
@@ -41,6 +42,7 @@ app.use("/api/v1/brands", brandRoutes);
 app.use("/api/v1/models", modelRoutes);
 app.use("/api/v1/customers", customerRoutes);
 app.use("/api/v1/services", serviceRoutes);
+app.use("/api/v1/repair-jobs", repairJobRoutes);
 
 app.use(errorHandler);
 
