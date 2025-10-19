@@ -2,13 +2,13 @@ import { AppDataSource } from "../config/typeorm";
 import { Customer } from "../entities/Customer.entity";
 import { Motorcycle } from "../entities/Motorcycle.entity";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
-import type { CustomerWithMotorcycleData, CustomerData, MotorcycleData } from "../types";
+import type { CustomerWithMotorcycleType, CustomerType, MotorcycleType } from "../types";
 
 export class CustomerService {
     static readonly customerRepository = AppDataSource.getRepository(Customer);
     static readonly motorcycleRepository = AppDataSource.getRepository(Motorcycle);
 
-    static create = async (data: CustomerWithMotorcycleData) => {
+    static create = async (data: CustomerWithMotorcycleType) => {
         return await AppDataSource.transaction(async manager => {
             try {
                 const existingMotorcycle = await manager.findOne(Motorcycle, {
@@ -19,7 +19,7 @@ export class CustomerService {
                     throw new BadRequestError("Ya existe una motocicleta con esta placa");
                 }
 
-                const customerData: CustomerData = {
+                const customerData: CustomerType = {
                     name: data.customer_name,
                     phone: data.customer_phone,
                     email: data.customer_email
@@ -28,7 +28,7 @@ export class CustomerService {
                 const customer = manager.create(Customer, customerData);
                 const savedCustomer = await manager.save(Customer, customer);
 
-                const motorcycleData: MotorcycleData & { customer_id: string } = {
+                const motorcycleData: MotorcycleType & { customer_id: string } = {
                     plate: data.motorcycle_plate,
                     brand_id: data.brand_id,
                     model_id: data.model_id,
@@ -55,7 +55,7 @@ export class CustomerService {
             });
             return customers;
         } catch (error) {
-            console.log(error);
+            console.log(error)
             throw new InternalServerError("Error al obtener clientes");
         }
     };
@@ -80,7 +80,7 @@ export class CustomerService {
         }
     };
 
-    static update = async (id: string, data: Partial<CustomerWithMotorcycleData>) => {
+    static update = async (id: string, data: Partial<CustomerWithMotorcycleType>) => {
         return await AppDataSource.transaction(async manager => {
             try {
                 const customer = await manager.findOne(Customer, {
@@ -92,8 +92,8 @@ export class CustomerService {
                     throw new NotFoundError("Customer not found");
                 }
 
-                const customerUpdateData: Partial<CustomerData> = {};
-                const motorcycleUpdateData: Partial<MotorcycleData> = {};
+                const customerUpdateData: Partial<CustomerType> = {};
+                const motorcycleUpdateData: Partial<MotorcycleType> = {};
 
                 if (data.customer_name !== undefined) customerUpdateData.name = data.customer_name;
                 if (data.customer_phone !== undefined) customerUpdateData.phone = data.customer_phone;
