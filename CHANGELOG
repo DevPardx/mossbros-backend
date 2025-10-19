@@ -1,6 +1,30 @@
 # CHANGELOG
 <!-- Latest on top -->
 
+## [1.0.0] - 2025-10-19
+### Added
+- Complete Customer Management System with motorcycle integration
+- Customer controller with full CRUD operations (create, read, update, delete)
+- Customer service layer with transactional operations for data integrity
+- Customer routes with comprehensive validation and authentication protection
+- OneToOne relationship between Customer and Motorcycle entities for better data modeling
+- TypeScript types for Customer and Motorcycle entities with proper type safety
+- Enhanced validation with snake_case field naming convention for API consistency
+- Customer-Motorcycle transactional creation for atomic operations
+
+### Changed
+- Enhanced error handling across all controllers (auth, brand, model, customer)
+- Added try-catch blocks with proper error logging and status codes
+- Updated Customer entity from OneToMany to OneToOne relationship with Motorcycle
+- Updated Motorcycle entity to use OneToOne relationship with Customer
+- Improved error messages with specific context for different operations
+- Enhanced server configuration to include customer routes
+
+### Fixed
+- Consistent error handling patterns across all API endpoints
+- Proper HTTP status codes for different error scenarios (404 for not found, 500 for server errors)
+- Database relationship integrity with proper cascade operations
+
 ## [1.0.0] - 2025-10-18
 ### Added
 - Comprehensive brand seeding system with 12 motorcycle brands
