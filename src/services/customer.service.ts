@@ -141,6 +141,8 @@ export class CustomerService {
             }
 
             await this.customerRepository.remove(customer);
+
+            return "Cliente eliminado correctamente";
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
