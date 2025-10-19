@@ -6,6 +6,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { AppDataSource } from "./config/typeorm";
 import authRoutes from "./routes/auth";
+import brandRoutes from "./routes/brands";
+import modelRoutes from "./routes/models";
 import { errorHandler } from "./middleware/error";
 import { runAllSeeds } from "./database/seeds";
 import { corsConfig } from "./config/cors";
@@ -33,6 +35,8 @@ app.use(cookieParser());
 app.use(cors(corsConfig));
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/brands", brandRoutes);
+app.use("/api/v1/models", modelRoutes);
 
 app.use(errorHandler);
 
