@@ -12,7 +12,6 @@ declare global {
         }
     }
 }
-/* eslint-enable @typescript-eslint/no-namespace */
 
 export const verifyJwtCookie = async (req: Request, res: Response, next: NextFunction) => {
     try {

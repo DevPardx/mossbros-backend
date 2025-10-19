@@ -10,7 +10,7 @@ export class AuthService {
 
     static login = async (data: LoginType) => {
         try{
-            const { email, password, rememberMe } = data;
+            const { email, password, remember_me } = data;
 
             const user = await this.userRepository.findOneBy({ email });
 
@@ -24,7 +24,7 @@ export class AuthService {
                 throw new BadRequestError("Credenciales inválidas");
             }
 
-            const token = generateJWT(user.id, rememberMe);
+            const token = generateJWT(user.id, remember_me);
 
             return token;
         }

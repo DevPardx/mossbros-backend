@@ -1,7 +1,7 @@
 export type LoginType = {
     email: string;
     password: string;
-    rememberMe: boolean;
+    remember_me: boolean;
 }
 
 export type ModelType = {
