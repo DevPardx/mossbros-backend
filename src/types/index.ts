@@ -38,3 +38,10 @@ export type CustomerWithMotorcycleType = {
     brand_id: string;
     model_id: string;
 }
+
+export type ServiceType = {
+    id: string;
+    name: string;
+    price: number;
+    is_active: boolean;
+}
