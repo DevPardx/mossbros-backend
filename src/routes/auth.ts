@@ -21,6 +21,6 @@ router.get("/verify", AuthController.verify);
 router.get("/profile",
     authenticate,
     AuthController.profile
-)
+);
 
 export default router;
