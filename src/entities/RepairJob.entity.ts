@@ -18,6 +18,18 @@ export class RepairJob {
   @Column({ type: "text", nullable: true })
   notes?: string;
 
+  @Column({ type: "timestamp", nullable: true })
+  estimated_completion?: Date;
+
+  @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
+  total_cost?: number;
+
+  @Column({ type: "timestamp", nullable: true })
+  started_at?: Date;
+
+  @Column({ type: "timestamp", nullable: true })
+  completed_at?: Date;
+
   @Column({ type: "uuid" })
   motorcycle_id: string;
 

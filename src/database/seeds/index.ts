@@ -3,6 +3,7 @@ import { seedBrands } from "./brand.seed";
 import { seedModels } from "./model.seed";
 import { seedCustomers } from "./customer.seed";
 import { seedMotorcycles } from "./motorcycle.seed";
+import { seedRepairJobs } from "./repairJob.seed";
 
 export const runAllSeeds = async (): Promise<void> => {
   console.log("🚀 Starting database seeding...");
@@ -13,6 +14,7 @@ export const runAllSeeds = async (): Promise<void> => {
     await seedModels();
     await seedCustomers();
     await seedMotorcycles();
+    await seedRepairJobs();
     
     console.log("🎊 All seeds completed successfully!");
   } catch (error) {
