@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { body, param } from "express-validator";
-import { authenticate } from '../middleware/auth';
+import { authenticate } from "../middleware/auth";
 import { handleInputErrors } from "../middleware/validation";
 import { ServiceController } from "../controllers/service.controller";
 

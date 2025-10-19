@@ -1,17 +1,17 @@
-import type { ServiceType } from '../types';
-import { AppDataSource } from '../config/typeorm';
-import { Service } from '../entities';
-import { AppError, BadRequestError, InternalServerError, NotFoundError } from '../handler/error.handler';
+import type { ServiceType } from "../types";
+import { AppDataSource } from "../config/typeorm";
+import { Service } from "../entities";
+import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
 
 export class ServiceService {
     static readonly serviceRepository = AppDataSource.getRepository(Service);
 
-    static create = async (data: Pick<ServiceType, 'name' | 'price'>) => {
+    static create = async (data: Pick<ServiceType, "name" | "price">) => {
         try{
             const service = await this.serviceRepository.findOneBy({ name: data.name.trim().toLowerCase() });
 
             if (service) {
-                throw new BadRequestError('Un servicio con ese nombre ya existe');
+                throw new BadRequestError("Un servicio con ese nombre ya existe");
             }
 
             const newService = this.serviceRepository.create(data);
@@ -26,7 +26,7 @@ export class ServiceService {
 
             throw new InternalServerError("Ocurrió un error al iniciar sesión");
         }
-    }
+    };
 
     static getAll = async () => {
         try{
@@ -40,15 +40,15 @@ export class ServiceService {
 
             throw new InternalServerError("Ocurrió un error al obtener los servicios");
         }
-    }
+    };
 
-    static getById = async (data: Pick<ServiceType, 'id'>) => {
+    static getById = async (data: Pick<ServiceType, "id">) => {
         try{
             const { id } = data;
             const service = await this.serviceRepository.findOneBy({ id });
 
             if (!service) {
-                throw new NotFoundError('Servicio no encontrado');
+                throw new NotFoundError("Servicio no encontrado");
             }
 
             return service;
@@ -60,15 +60,15 @@ export class ServiceService {
 
             throw new InternalServerError("Ocurrió un error al obtener el servicio");
         }
-    }
+    };
 
-    static update = async (data: Pick<ServiceType, 'id' | 'name' | 'price' | 'is_active'>) => {
+    static update = async (data: Pick<ServiceType, "id" | "name" | "price" | "is_active">) => {
         try{
             const { id, name, price, is_active } = data;
             const service = await this.serviceRepository.findOneBy({ id });
 
             if (!service) {
-                throw new NotFoundError('Servicio no encontrado');
+                throw new NotFoundError("Servicio no encontrado");
             }
 
             service.name = name;
@@ -86,15 +86,15 @@ export class ServiceService {
 
             throw new InternalServerError("Ocurrió un error al actualizar el servicio");
         }
-    }
+    };
 
-    static delete = async (data: Pick<ServiceType, 'id'>) => {
+    static delete = async (data: Pick<ServiceType, "id">) => {
         try{
             const { id } = data;
             const service = await this.serviceRepository.findOneBy({ id });
 
             if (!service) {
-                throw new NotFoundError('Servicio no encontrado');
+                throw new NotFoundError("Servicio no encontrado");
             }
 
             await this.serviceRepository.remove(service);
@@ -108,5 +108,5 @@ export class ServiceService {
 
             throw new InternalServerError("Ocurrió un error al eliminar el servicio");
         }
-    }
+    };
 }
