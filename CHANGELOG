@@ -1,6 +1,24 @@
 # CHANGELOG
 <!-- Latest on top -->
 
+## [1.3.0] - 2025-10-19
+### Added
+- **Enhanced RepairJob Statistics System**: Improved business analytics with comprehensive metrics
+  - Daily metrics tracking for jobs completed today and today's revenue
+  - Weekly metrics for new customer acquisition tracking  
+  - Enhanced statistics endpoint with time-based filtering capabilities
+  - Customer entity integration in RepairJob service for cross-entity analytics
+
+### Changed
+- Enhanced getStatistics method with date-based calculations for daily and weekly insights
+- Improved business intelligence capabilities with real-time performance metrics
+- Updated RepairJob service with additional repository dependencies for comprehensive analytics
+
+### Technical Improvements
+- Added Customer repository integration in RepairJob service
+- Implemented date boundary calculations for accurate time-based metrics
+- Enhanced database query optimization with parallel execution using Promise.all()
+
 ## [1.0.0] - 2025-10-19
 ### Added
 - **Professional README Documentation**: Complete rewrite with comprehensive project documentation
