@@ -15,7 +15,7 @@ export class RepairJobController {
         const jobs = await client.get("repair_jobs");
 
         if (jobs) {
-            const data = typeof jobs === 'string' ? jobs : jobs.toString();
+            const data = typeof jobs === "string" ? jobs : jobs.toString();
             return res.status(200).json(JSON.parse(data));
         }
 
@@ -85,7 +85,7 @@ export class RepairJobController {
         const statistics = await client.get("repair_job_statistics");
 
         if (statistics) {
-            const data = typeof statistics === 'string' ? statistics : statistics.toString();
+            const data = typeof statistics === "string" ? statistics : statistics.toString();
             return res.status(200).json(JSON.parse(data));
         }
         

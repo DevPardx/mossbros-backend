@@ -14,7 +14,7 @@ export class ServiceController {
         const services = await client.get("services");
 
         if (services) {
-            const data = typeof services === 'string' ? services : services.toString();
+            const data = typeof services === "string" ? services : services.toString();
             return res.status(200).json(JSON.parse(data));
         }
 

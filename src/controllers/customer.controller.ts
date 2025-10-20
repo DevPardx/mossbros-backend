@@ -13,7 +13,7 @@ export class CustomerController {
         const customers = await client.get("customers");
 
         if (customers) {
-            const data = typeof customers === 'string' ? customers : customers.toString();
+            const data = typeof customers === "string" ? customers : customers.toString();
             return res.status(200).json(JSON.parse(data));
         }
 

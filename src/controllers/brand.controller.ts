@@ -14,7 +14,7 @@ export class BrandController {
     const brands = await client.get("brands");
 
     if (brands) {
-      const data = typeof brands === 'string' ? brands : brands.toString();
+      const data = typeof brands === "string" ? brands : brands.toString();
       return res.status(200).json(JSON.parse(data));
     }
 

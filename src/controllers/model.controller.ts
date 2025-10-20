@@ -14,7 +14,7 @@ export class ModelController {
     const models = await client.get("models");
 
     if (models) {
-      const data = typeof models === 'string' ? models : models.toString();
+      const data = typeof models === "string" ? models : models.toString();
       return res.status(200).json(JSON.parse(data));
     }
 

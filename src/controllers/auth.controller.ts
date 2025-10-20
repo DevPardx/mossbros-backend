@@ -41,7 +41,7 @@ export class AuthController {
         const response = await client.get("user_profile");
 
         if(response) {
-            const data = typeof response === 'string' ? response : response.toString();
+            const data = typeof response === "string" ? response : response.toString();
             return res.status(200).json(JSON.parse(data));
         }
 

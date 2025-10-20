@@ -9,6 +9,6 @@ const main = async () => {
   server.listen(PORT, () => {
     console.log(colors.cyan.bold(`Server is running on port ${PORT}`));
   });
-}
+};
 
 main();
