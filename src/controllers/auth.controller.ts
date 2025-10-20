@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
+import { client } from "../config/redis";
 
 export class AuthController {
     static login = async (req: Request, res: Response) => {
@@ -37,10 +38,20 @@ export class AuthController {
     };
 
     static profile = async (req: Request, res: Response) => {
+        const response = await client.get("user_profile");
+
+        if(response) {
+            const data = typeof response === "string" ? response : response.toString();
+            return res.status(200).json(JSON.parse(data));
+        }
+
         const user = req.user;
+
         if (!user) {
             return res.status(401).json({ error: "No autorizado" });
         }
+
+        await client.set("user_profile", JSON.stringify(user));
         return res.status(200).json(user);
     };
 }

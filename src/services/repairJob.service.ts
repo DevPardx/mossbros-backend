@@ -2,6 +2,7 @@ import { AppDataSource } from "../config/typeorm";
 import { RepairJob } from "../entities/RepairJob.entity";
 import { Service } from "../entities/Service.entity";
 import { Motorcycle } from "../entities/Motorcycle.entity";
+import { Customer } from "../entities/Customer.entity";
 import { RepairStatus } from "../enums";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
 import type { CreateRepairJobType, UpdateRepairJobType, RepairJobWorkflowType } from "../types";
@@ -10,6 +11,7 @@ export class RepairJobService {
     static readonly repairJobRepository = AppDataSource.getRepository(RepairJob);
     static readonly serviceRepository = AppDataSource.getRepository(Service);
     static readonly motorcycleRepository = AppDataSource.getRepository(Motorcycle);
+    static readonly customerRepository = AppDataSource.getRepository(Customer);
 
     static readonly WORKFLOW_RULES = {
         [RepairStatus.PENDING]: {
@@ -298,6 +300,14 @@ export class RepairJobService {
 
     static getStatistics = async () => {
         try {
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const todayEnd = new Date(todayStart);
+            todayEnd.setDate(todayEnd.getDate() + 1);
+            
+            const weekStart = new Date(todayStart);
+            weekStart.setDate(weekStart.getDate() - 7);
+
             const [
                 total,
                 pending,
@@ -305,7 +315,9 @@ export class RepairJobService {
                 waitingForParts,
                 readyForPickup,
                 completed,
-                cancelled
+                cancelled,
+                jobsCompletedToday,
+                newClientsThisWeek
             ] = await Promise.all([
                 this.repairJobRepository.count(),
                 this.repairJobRepository.count({ where: { status: RepairStatus.PENDING } }),
@@ -313,7 +325,18 @@ export class RepairJobService {
                 this.repairJobRepository.count({ where: { status: RepairStatus.WAITING_FOR_PARTS } }),
                 this.repairJobRepository.count({ where: { status: RepairStatus.READY_FOR_PICKUP } }),
                 this.repairJobRepository.count({ where: { status: RepairStatus.COMPLETED } }),
-                this.repairJobRepository.count({ where: { status: RepairStatus.CANCELLED } })
+                this.repairJobRepository.count({ where: { status: RepairStatus.CANCELLED } }),
+                this.repairJobRepository
+                    .createQueryBuilder("repair_job")
+                    .where("repair_job.status = :status", { status: RepairStatus.COMPLETED })
+                    .andWhere("repair_job.completed_at >= :todayStart", { todayStart })
+                    .andWhere("repair_job.completed_at < :todayEnd", { todayEnd })
+                    .getCount(),
+                this.customerRepository
+                    .createQueryBuilder("customer")
+                    .where("customer.created_at >= :weekStart", { weekStart })
+                    .andWhere("customer.created_at < :todayEnd", { todayEnd })
+                    .getCount()
             ]);
 
             const completedJobs = await this.repairJobRepository.find({
@@ -322,6 +345,16 @@ export class RepairJobService {
             });
             
             const totalRevenue = completedJobs.reduce((sum, job) => sum + Number(job.total_cost || 0), 0);
+
+            const todayCompletedJobs = await this.repairJobRepository
+                .createQueryBuilder("repair_job")
+                .where("repair_job.status = :status", { status: RepairStatus.COMPLETED })
+                .andWhere("repair_job.completed_at >= :todayStart", { todayStart })
+                .andWhere("repair_job.completed_at < :todayEnd", { todayEnd })
+                .select(["repair_job.total_cost"])
+                .getMany();
+
+            const todayRevenue = todayCompletedJobs.reduce((sum, job) => sum + Number(job.total_cost || 0), 0);
 
             return {
                 total_jobs: total,
@@ -334,7 +367,14 @@ export class RepairJobService {
                     cancelled
                 },
                 total_revenue: totalRevenue,
-                completion_rate: total > 0 ? ((completed / total) * 100).toFixed(2) : 0
+                completion_rate: total > 0 ? ((completed / total) * 100).toFixed(2) : 0,
+                daily_metrics: {
+                    jobs_completed_today: jobsCompletedToday,
+                    revenue_today: todayRevenue
+                },
+                weekly_metrics: {
+                    new_clients_this_week: newClientsThisWeek
+                }
             };
 
         } catch (error) {
