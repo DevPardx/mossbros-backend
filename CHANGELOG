@@ -1,7 +1,12 @@
 # CHANGELOG
 <!-- Latest on top -->
 
-## [1.3.0] - 2025-10-19
+## [1.0.0]
+### Changed
+- Updated repair job statistics to get monthly data
+- Cleaned up code for better readability in repairJob.service.ts
+
+## [1.0.0] - 2025-10-19
 ### Added
 - **Enhanced RepairJob Statistics System**: Improved business analytics with comprehensive metrics
   - Daily metrics tracking for jobs completed today and today's revenue

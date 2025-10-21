@@ -82,15 +82,7 @@ export class RepairJobController {
     };
 
     static getStatistics = async (req: Request, res: Response) => {
-        const statistics = await client.get("repair_job_statistics");
-
-        if (statistics) {
-            const data = typeof statistics === "string" ? statistics : statistics.toString();
-            return res.status(200).json(JSON.parse(data));
-        }
-        
         const response = await RepairJobService.getStatistics();
-        await client.set("repair_job_statistics", JSON.stringify(response));
         return res.status(200).json(response);
     };
 }
