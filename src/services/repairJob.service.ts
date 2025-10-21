@@ -301,79 +301,83 @@ export class RepairJobService {
     static getStatistics = async () => {
         try {
             const now = new Date();
-            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const todayEnd = new Date(todayStart);
-            todayEnd.setDate(todayEnd.getDate() + 1);
-            
-            const weekStart = new Date(todayStart);
-            weekStart.setDate(weekStart.getDate() - 7);
+            const thirtyDaysAgo = new Date(now);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-            const [
-                total,
-                pending,
-                inRepair,
-                waitingForParts,
-                readyForPickup,
-                completed,
-                cancelled,
-                jobsCompletedToday,
-                newClientsThisWeek
-            ] = await Promise.all([
-                this.repairJobRepository.count(),
-                this.repairJobRepository.count({ where: { status: RepairStatus.PENDING } }),
-                this.repairJobRepository.count({ where: { status: RepairStatus.IN_REPAIR } }),
-                this.repairJobRepository.count({ where: { status: RepairStatus.WAITING_FOR_PARTS } }),
-                this.repairJobRepository.count({ where: { status: RepairStatus.READY_FOR_PICKUP } }),
-                this.repairJobRepository.count({ where: { status: RepairStatus.COMPLETED } }),
-                this.repairJobRepository.count({ where: { status: RepairStatus.CANCELLED } }),
-                this.repairJobRepository
-                    .createQueryBuilder("repair_job")
-                    .where("repair_job.status = :status", { status: RepairStatus.COMPLETED })
-                    .andWhere("repair_job.completed_at >= :todayStart", { todayStart })
-                    .andWhere("repair_job.completed_at < :todayEnd", { todayEnd })
-                    .getCount(),
-                this.customerRepository
-                    .createQueryBuilder("customer")
-                    .where("customer.created_at >= :weekStart", { weekStart })
-                    .andWhere("customer.created_at < :todayEnd", { todayEnd })
-                    .getCount()
-            ]);
+            const sixtyDaysAgo = new Date(now);
+            sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
-            const completedJobs = await this.repairJobRepository.find({
-                where: { status: RepairStatus.COMPLETED },
-                select: ["total_cost"]
-            });
-            
-            const totalRevenue = completedJobs.reduce((sum, job) => sum + Number(job.total_cost || 0), 0);
-
-            const todayCompletedJobs = await this.repairJobRepository
+            const completedJobsLast30Days = await this.repairJobRepository
                 .createQueryBuilder("repair_job")
                 .where("repair_job.status = :status", { status: RepairStatus.COMPLETED })
-                .andWhere("repair_job.completed_at >= :todayStart", { todayStart })
-                .andWhere("repair_job.completed_at < :todayEnd", { todayEnd })
+                .andWhere("repair_job.completed_at >= :thirtyDaysAgo", { thirtyDaysAgo })
+                .andWhere("repair_job.completed_at <= :now", { now })
                 .select(["repair_job.total_cost"])
                 .getMany();
 
-            const todayRevenue = todayCompletedJobs.reduce((sum, job) => sum + Number(job.total_cost || 0), 0);
+            const currentTotalRevenue = completedJobsLast30Days.reduce((sum, job) => 
+                sum + Number(job.total_cost || 0), 0
+            );
+
+            const currentJobsCompleted = completedJobsLast30Days.length;
+
+            const currentNewClients = await this.customerRepository
+                .createQueryBuilder("customer")
+                .where("customer.created_at >= :thirtyDaysAgo", { thirtyDaysAgo })
+                .andWhere("customer.created_at <= :now", { now })
+                .getCount();
+
+            const completedJobsPrevious30Days = await this.repairJobRepository
+                .createQueryBuilder("repair_job")
+                .where("repair_job.status = :status", { status: RepairStatus.COMPLETED })
+                .andWhere("repair_job.completed_at >= :sixtyDaysAgo", { sixtyDaysAgo })
+                .andWhere("repair_job.completed_at < :thirtyDaysAgo", { thirtyDaysAgo })
+                .select(["repair_job.total_cost"])
+                .getMany();
+
+            // Calcular revenue del mes anterior
+            const previousTotalRevenue = completedJobsPrevious30Days.reduce((sum, job) => 
+                sum + Number(job.total_cost || 0), 0
+            );
+
+            // Contar trabajos completados del mes anterior
+            const previousJobsCompleted = completedJobsPrevious30Days.length;
+
+            // Obtener nuevos clientes del mes anterior
+            const previousNewClients = await this.customerRepository
+                .createQueryBuilder("customer")
+                .where("customer.created_at >= :sixtyDaysAgo", { sixtyDaysAgo })
+                .andWhere("customer.created_at < :thirtyDaysAgo", { thirtyDaysAgo })
+                .getCount();
+
+            // === CALCULAR PORCENTAJES DE CAMBIO ===
+
+            const calculatePercentageChange = (current: number, previous: number): number => {
+                if (previous === 0) {
+                    return current > 0 ? 100 : 0; // Si anterior era 0 y ahora hay algo, es 100% de incremento
+                }
+                return Number((((current - previous) / previous) * 100).toFixed(2));
+            };
+
+            const revenueChange = calculatePercentageChange(currentTotalRevenue, previousTotalRevenue);
+            const clientsChange = calculatePercentageChange(currentNewClients, previousNewClients);
+            const jobsChange = calculatePercentageChange(currentJobsCompleted, previousJobsCompleted);
 
             return {
-                total_jobs: total,
-                by_status: {
-                    pending,
-                    in_repair: inRepair,
-                    waiting_for_parts: waitingForParts,
-                    ready_for_pickup: readyForPickup,
-                    completed,
-                    cancelled
+                total_revenue: {
+                    value: currentTotalRevenue,
+                    percentage_change: revenueChange,
+                    trend: revenueChange >= 0 ? "up" : "down"
                 },
-                total_revenue: totalRevenue,
-                completion_rate: total > 0 ? ((completed / total) * 100).toFixed(2) : 0,
-                daily_metrics: {
-                    jobs_completed_today: jobsCompletedToday,
-                    revenue_today: todayRevenue
+                new_clients: {
+                    value: currentNewClients,
+                    percentage_change: clientsChange,
+                    trend: clientsChange >= 0 ? "up" : "down"
                 },
-                weekly_metrics: {
-                    new_clients_this_week: newClientsThisWeek
+                jobs_completed: {
+                    value: currentJobsCompleted,
+                    percentage_change: jobsChange,
+                    trend: jobsChange >= 0 ? "up" : "down"
                 }
             };
 
