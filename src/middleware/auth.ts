@@ -58,7 +58,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         if(typeof decoded === "object" && decoded.id){
             const user = await AppDataSource.getRepository(User).findOne({
                 where: { id: decoded.id },
-                select: ["id", "email", "role", "phone"]
+                select: ["id", "email", "role", "phone", "name"]
             });
             req.user = user;
             next();

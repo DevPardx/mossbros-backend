@@ -12,9 +12,9 @@ export class AuthController {
         const response = await AuthService.login({ email, password, remember_me });
         
         res.cookie("_token", response, {
-            httpOnly: true,
+            httpOnly: false,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            sameSite: "strict",
             maxAge: remember_me ?  maxAge : minAge
         });
 
