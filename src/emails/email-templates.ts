@@ -2,7 +2,7 @@ import { ForgotPasswordEmailType } from "../types";
 
 export class EmailTemplates {
     static forgotPasswordTemplate(data: ForgotPasswordEmailType): string {
-        const resetUrl = `${process.env.FRONTEND_URL}/auth/reestablecer/${data.token}`;
+        const resetUrl = `${process.env.FRONTEND_URL}/reestablecer-password/${data.token}`;
         const currentDate = new Date(data.date).toLocaleDateString("es-ES", {
             year: "numeric",
             month: "long",
