@@ -54,4 +54,26 @@ export class AuthController {
         await client.set("user_profile", JSON.stringify(user));
         return res.status(200).json(user);
     };
+
+    static forgotPassword = async (req: Request, res: Response) => {
+        const { email } = req.body;
+
+        const response = await AuthService.forgotPassword({ email });
+        return res.status(200).json(response);
+    };
+
+    static verifyPasswordResetToken = async (req: Request, res: Response) => {
+        const { token } = req.params;
+
+        await AuthService.verifyPasswordResetToken(token);
+        return res.status(200).json("Token válido");
+    };
+
+    static resetPassword = async (req: Request, res: Response) => {
+        const { token } = req.params;
+        const { new_password } = req.body;
+
+        const response = await AuthService.resetPasswordWithToken({ token, new_password });
+        return res.status(200).json(response);
+    };
 }
