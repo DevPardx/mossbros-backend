@@ -18,6 +18,12 @@ export class User {
   @Column({ type: "varchar", length: 15, nullable: true })
   phone: string;
 
+  @Column({ type: "char", length: 6, nullable: true })
+  token: string;
+
+  @Column({ type: "timestamp", nullable: true })
+  token_expires_at?: Date;
+
   @Column({ type: "enum", enum: UserRole, default: UserRole.OWNER })
   role: UserRole;
 

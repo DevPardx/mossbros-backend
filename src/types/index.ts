@@ -4,6 +4,21 @@ export type LoginType = {
     remember_me: boolean;
 }
 
+export type ForgotPasswordType = Pick<LoginType, "email">;
+
+export type ForgotPasswordEmailType = {
+    email: string;
+    name: string;
+    token: string;
+    expires_in: number;
+    date: Date;
+}
+
+export type ResetPasswordType = {
+    token: string;
+    new_password: string;
+}
+
 export type ModelType = {
     id: string;
     name: string;
