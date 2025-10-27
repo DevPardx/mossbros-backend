@@ -1,6 +1,7 @@
 import { seedOwnerUser } from "./user.seed";
 import { seedBrands } from "./brand.seed";
 import { seedModels } from "./model.seed";
+import { seedServices } from "./service.seed";
 import { seedCustomers } from "./customer.seed";
 import { seedMotorcycles } from "./motorcycle.seed";
 import { seedRepairJobs } from "./repairJob.seed";
@@ -12,6 +13,7 @@ export const runAllSeeds = async (): Promise<void> => {
     await seedOwnerUser();
     await seedBrands();
     await seedModels();
+    await seedServices();
     await seedCustomers();
     await seedMotorcycles();
     await seedRepairJobs();

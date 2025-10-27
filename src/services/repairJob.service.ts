@@ -335,26 +335,21 @@ export class RepairJobService {
                 .select(["repair_job.total_cost"])
                 .getMany();
 
-            // Calcular revenue del mes anterior
             const previousTotalRevenue = completedJobsPrevious30Days.reduce((sum, job) => 
                 sum + Number(job.total_cost || 0), 0
             );
 
-            // Contar trabajos completados del mes anterior
             const previousJobsCompleted = completedJobsPrevious30Days.length;
 
-            // Obtener nuevos clientes del mes anterior
             const previousNewClients = await this.customerRepository
                 .createQueryBuilder("customer")
                 .where("customer.created_at >= :sixtyDaysAgo", { sixtyDaysAgo })
                 .andWhere("customer.created_at < :thirtyDaysAgo", { thirtyDaysAgo })
                 .getCount();
 
-            // === CALCULAR PORCENTAJES DE CAMBIO ===
-
             const calculatePercentageChange = (current: number, previous: number): number => {
                 if (previous === 0) {
-                    return current > 0 ? 100 : 0; // Si anterior era 0 y ahora hay algo, es 100% de incremento
+                    return current > 0 ? 100 : 0;
                 }
                 return Number((((current - previous) / previous) * 100).toFixed(2));
             };
