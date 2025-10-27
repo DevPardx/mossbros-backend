@@ -1,6 +1,32 @@
 # CHANGELOG
 <!-- Latest on top -->
 
+## [1.0.0] 2025-10-26
+### Added
+- **Enhanced Customer Creation with Comprehensive Validation**
+  - Duplicate validation for customer email addresses to prevent duplicate accounts
+  - Duplicate validation for customer phone numbers for data integrity
+  - Duplicate validation for motorcycle plates to ensure unique vehicle registration
+  - Transaction-based customer creation for atomic operations and data consistency
+  - Comprehensive error handling with specific Spanish error messages for user feedback
+
+### Changed
+- **Improved Customer Service Layer**
+  - Enhanced customer creation process with triple-validation system (email, phone, plate)
+  - Updated customer retrieval to order by creation date (newest first) for better UI experience
+  - Improved error handling with specific BadRequestError types for validation failures
+  - Enhanced transaction management to ensure data consistency across customer and motorcycle entities
+
+- **Model Controller Enhancement**
+  - Updated model controller to support brand-based filtering with brand_id parameter
+  - Improved model retrieval system for frontend dropdown population
+  - Enhanced model management for better integration with customer creation flow
+
+### Fixed
+- Customer creation data integrity issues with comprehensive duplicate checking
+- Race condition prevention in customer and motorcycle creation through proper transaction handling
+- Improved error messaging for better user experience during customer registration
+
 ## [1.0.0]
 ### Changed
 - Updated repair job statistics to get monthly data
