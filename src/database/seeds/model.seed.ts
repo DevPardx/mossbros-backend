@@ -29,6 +29,8 @@ export async function seedModels() {
     const suzuki = brands.find(b => b.name === "Suzuki");
     const bmw = brands.find(b => b.name === "BMW");
     const ducati = brands.find(b => b.name === "Ducati");
+    const ktm = brands.find(b => b.name === "KTM");
+    const harley = brands.find(b => b.name === "Harley Davidson");
 
     const models = [];
 
@@ -123,6 +125,39 @@ export async function seedModels() {
             { name: "Monster 821", brand_id: ducati.id, is_active: true },
             { name: "Multistrada V4", brand_id: ducati.id, is_active: true },
             { name: "Scrambler Icon", brand_id: ducati.id, is_active: true }
+        );
+    }
+
+    if (ktm) {
+        models.push(
+            { name: "390 Duke", brand_id: ktm.id, is_active: true },
+            { name: "790 Duke", brand_id: ktm.id, is_active: true },
+            { name: "890 Duke R", brand_id: ktm.id, is_active: true },
+            { name: "1290 Super Duke R", brand_id: ktm.id, is_active: true },
+            { name: "390 Adventure", brand_id: ktm.id, is_active: true },
+            { name: "890 Adventure", brand_id: ktm.id, is_active: true },
+            { name: "1290 Super Adventure S", brand_id: ktm.id, is_active: true },
+            { name: "RC 390", brand_id: ktm.id, is_active: true },
+            { name: "RC 200", brand_id: ktm.id, is_active: true },
+            { name: "250 Duke", brand_id: ktm.id, is_active: true },
+            { name: "690 SMC R", brand_id: ktm.id, is_active: true },
+            { name: "1290 Super Duke GT", brand_id: ktm.id, is_active: true }
+        );
+    }
+
+    if (harley) {
+        models.push(
+            { name: "Street Glide", brand_id: harley.id, is_active: true },
+            { name: "Road Glide", brand_id: harley.id, is_active: true },
+            { name: "Sportster S", brand_id: harley.id, is_active: true },
+            { name: "Fat Boy", brand_id: harley.id, is_active: true },
+            { name: "Iron 883", brand_id: harley.id, is_active: true },
+            { name: "Forty-Eight", brand_id: harley.id, is_active: true },
+            { name: "Street Bob", brand_id: harley.id, is_active: true },
+            { name: "Low Rider S", brand_id: harley.id, is_active: true },
+            { name: "Heritage Classic", brand_id: harley.id, is_active: true },
+            { name: "Road King", brand_id: harley.id, is_active: true },
+            { name: "Nightster", brand_id: harley.id, is_active: true }
         );
     }
 
