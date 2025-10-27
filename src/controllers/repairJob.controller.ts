@@ -1,24 +1,14 @@
 import type { Request, Response } from "express";
-import { client } from "../config/redis";
 import { RepairJobService } from "../services/repairJob.service";
 import { RepairStatus } from "../enums";
 
 export class RepairJobController {
     static create = async (req: Request, res: Response) => {
         const response = await RepairJobService.create(req.body);
-        await client.del("repair_jobs");
-        await client.del("repair_job_statistics");
         return res.status(201).json(response);
     };
 
     static getAll = async (req: Request, res: Response) => {
-        const jobs = await client.get("repair_jobs");
-
-        if (jobs) {
-            const data = typeof jobs === "string" ? jobs : jobs.toString();
-            return res.status(200).json(JSON.parse(data));
-        }
-
         const { status, motorcycle_id } = req.query;
         
         const filters: { status?: RepairStatus; motorcycle_id?: string } = {};
@@ -32,7 +22,6 @@ export class RepairJobController {
         }
 
         const repairJobs = await RepairJobService.getAll(filters);
-        await client.set("repair_jobs", JSON.stringify(repairJobs));
         return res.status(200).json(repairJobs);
     };
 
@@ -45,8 +34,6 @@ export class RepairJobController {
     static update = async (req: Request, res: Response) => {
         const { id } = req.params;
         const response = await RepairJobService.update(id, req.body);
-        await client.del("repair_jobs");
-        await client.del("repair_job_statistics");
         return res.status(200).json(response);
     };
 
@@ -54,24 +41,18 @@ export class RepairJobController {
         const { id } = req.params;
         const { status } = req.body;
         const response = await RepairJobService.updateStatus(id, status);
-        await client.del("repair_jobs");
-        await client.del("repair_job_statistics");
         return res.status(200).json(response);
     };
 
     static cancel = async (req: Request, res: Response) => {
         const { id } = req.params;
         const response = await RepairJobService.cancel(id);
-        await client.del("repair_jobs");
-        await client.del("repair_job_statistics");
         return res.status(200).json(response);
     };
 
     static delete = async (req: Request, res: Response) => {
         const { id } = req.params;
         const response = await RepairJobService.delete(id);
-        await client.del("repair_jobs");
-        await client.del("repair_job_statistics");
         return res.status(200).json(response);
     };
 

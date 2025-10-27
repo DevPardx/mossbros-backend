@@ -11,12 +11,33 @@ export class CustomerService {
     static create = async (data: CustomerWithMotorcycleType) => {
         return await AppDataSource.transaction(async manager => {
             try {
+                // Check for duplicate motorcycle plate
                 const existingMotorcycle = await manager.findOne(Motorcycle, {
                     where: { plate: data.motorcycle_plate }
                 });
 
                 if (existingMotorcycle) {
                     throw new BadRequestError("Ya existe una motocicleta con esta placa");
+                }
+
+                // Check for duplicate customer email (if provided)
+                if (data.customer_email) {
+                    const existingCustomerByEmail = await manager.findOne(Customer, {
+                        where: { email: data.customer_email }
+                    });
+
+                    if (existingCustomerByEmail) {
+                        throw new BadRequestError("Ya existe un cliente con este correo electrónico");
+                    }
+                }
+
+                // Check for duplicate customer phone
+                const existingCustomerByPhone = await manager.findOne(Customer, {
+                    where: { phone: data.customer_phone }
+                });
+
+                if (existingCustomerByPhone) {
+                    throw new BadRequestError("Ya existe un cliente con este número de teléfono");
                 }
 
                 const customerData: CustomerType = {
@@ -51,7 +72,8 @@ export class CustomerService {
     static getAll = async () => {
         try {
             const customers = await this.customerRepository.find({
-                relations: ["motorcycle", "motorcycle.brand", "motorcycle.model"]
+                relations: ["motorcycle", "motorcycle.brand", "motorcycle.model"],
+                order: { created_at: "DESC" }
             });
             return customers;
         } catch (error) {
