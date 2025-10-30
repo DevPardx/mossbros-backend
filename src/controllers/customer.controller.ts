@@ -12,6 +12,12 @@ export class CustomerController {
         res.status(200).json(response);
     };
 
+    static search = async (req: Request, res: Response) => {
+        const { q } = req.query;
+        const response = await CustomerService.search(q as string || "");
+        res.status(200).json(response);
+    };
+
     static getById = async (req: Request, res: Response) => {
         const { id } = req.params;
         const response = await CustomerService.getById(id);

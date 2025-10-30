@@ -2,6 +2,21 @@
 <!-- Latest on top -->
 
 ## [1.0.0] 2025-10-29
+### Added
+- **Customer Search Functionality**: Server-side search endpoint for customers
+  - Added search method in CustomerService with TypeORM QueryBuilder
+  - Case-insensitive search using LOWER() and LIKE operators
+  - Searches across customer name and motorcycle plate fields
+  - Returns all customers when search query is empty
+  - Added CustomerController.search method to handle search requests
+  - Added GET /customers/search?q=query route endpoint
+  - Search results ordered by creation date (newest first)
+
+### Changed
+- **Customer Retrieval Ordering**: Updated CustomerService.getAll to order by created_at DESC
+  - Ensures customers are always displayed with newest first
+  - Consistent ordering across all customer list views
+
 ### Fixed
 - **Dashboard Statistics Calculation**: Fixed statistics to use calendar month boundaries instead of rolling 30-day windows
   - Updated `getStatistics` method to calculate statistics based on current calendar month vs previous calendar month

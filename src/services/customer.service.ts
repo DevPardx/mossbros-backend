@@ -11,7 +11,6 @@ export class CustomerService {
     static create = async (data: CustomerWithMotorcycleType) => {
         return await AppDataSource.transaction(async manager => {
             try {
-                // Check for duplicate motorcycle plate
                 const existingMotorcycle = await manager.findOne(Motorcycle, {
                     where: { plate: data.motorcycle_plate }
                 });
@@ -20,7 +19,6 @@ export class CustomerService {
                     throw new BadRequestError("Ya existe una motocicleta con esta placa");
                 }
 
-                // Check for duplicate customer email (if provided)
                 if (data.customer_email) {
                     const existingCustomerByEmail = await manager.findOne(Customer, {
                         where: { email: data.customer_email }
@@ -31,7 +29,6 @@ export class CustomerService {
                     }
                 }
 
-                // Check for duplicate customer phone
                 const existingCustomerByPhone = await manager.findOne(Customer, {
                     where: { phone: data.customer_phone }
                 });
@@ -79,6 +76,31 @@ export class CustomerService {
         } catch (error) {
             console.log(error);
             throw new InternalServerError("Error al obtener clientes");
+        }
+    };
+
+    static search = async (query: string) => {
+        try {
+            if (!query || query.trim() === "") {
+                return await this.getAll();
+            }
+
+            const searchTerm = `%${query.toLowerCase()}%`;
+
+            const customers = await this.customerRepository
+                .createQueryBuilder("customer")
+                .leftJoinAndSelect("customer.motorcycle", "motorcycle")
+                .leftJoinAndSelect("motorcycle.brand", "brand")
+                .leftJoinAndSelect("motorcycle.model", "model")
+                .where("LOWER(customer.name) LIKE :searchTerm", { searchTerm })
+                .orWhere("LOWER(motorcycle.plate) LIKE :searchTerm", { searchTerm })
+                .orderBy("customer.created_at", "DESC")
+                .getMany();
+
+            return customers;
+        } catch (error) {
+            console.log(error);
+            throw new InternalServerError("Error al buscar clientes");
         }
     };
 
