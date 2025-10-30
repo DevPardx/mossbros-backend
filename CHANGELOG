@@ -1,6 +1,20 @@
 # CHANGELOG
 <!-- Latest on top -->
 
+## [1.0.0] 2025-10-29
+### Fixed
+- **Dashboard Statistics Calculation**: Fixed statistics to use calendar month boundaries instead of rolling 30-day windows
+  - Updated `getStatistics` method to calculate statistics based on current calendar month vs previous calendar month
+  - Fixed new clients not appearing in statistics immediately after creation
+  - Changed date range calculation from "30 days ago" to proper month boundaries (e.g., October 1-31 vs September 1-30)
+  - Added precise time boundaries (00:00:00 for month start, 23:59:59 for month end) for accurate data capture
+  - Updated variable names for better code clarity (currentMonthStart, currentMonthEnd, previousMonthStart, previousMonthEnd)
+
+### Technical Improvements
+- Improved date handling in RepairJob service with proper month boundary calculations
+- Enhanced statistics accuracy by using calendar months for business metrics comparison
+- Better alignment between backend calculations and frontend display labels
+
 ## [1.0.0] 2025-10-26
 ### Added
 - **Enhanced Customer Creation with Comprehensive Validation**
