@@ -10,7 +10,7 @@ router.use(authenticate);
 
 router.post("/",
     body("customer_name").notEmpty().withMessage("Customer name is required")
-        .isAlpha("en-US", { ignore: " " }).withMessage("Customer name must contain only letters and spaces"),
+        .isString().withMessage("Customer name not valid"),
     body("customer_phone").notEmpty().withMessage("Phone number is required")
         .isLength({ min: 14, max: 14 }).withMessage("Invalid phone number"),
     body("customer_email").optional().isEmail().withMessage("Email must be valid"),
@@ -22,6 +22,8 @@ router.post("/",
     CustomerController.create
 );
 
+router.get("/search", CustomerController.search);
+
 router.get("/", CustomerController.getAll);
 
 router.get("/:id",
@@ -32,7 +34,8 @@ router.get("/:id",
 
 router.put("/:id",
     param("id").isUUID().withMessage("Customer ID must be valid"),
-    body("customer_name").isAlpha("en-US", { ignore: " " }).withMessage("Customer name must contain only letters and spaces"),
+    body("customer_name").notEmpty().withMessage("Customer name is required")
+        .isString().withMessage("Customer name not valid"),
     body("customer_phone").isLength({ min: 14, max: 14 }).withMessage("Invalid phone number"),
     body("customer_email").isEmail().withMessage("Email must be valid"),
     body("motorcycle_plate").isLength({ min: 6, max: 10 }).withMessage("Plate must be between 6 and 10 characters"),
