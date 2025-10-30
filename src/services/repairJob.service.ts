@@ -301,50 +301,57 @@ export class RepairJobService {
     static getStatistics = async () => {
         try {
             const now = new Date();
-            const thirtyDaysAgo = new Date(now);
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-            const sixtyDaysAgo = new Date(now);
-            sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+            // Get first day of current month at 00:00:00
+            const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
 
-            const completedJobsLast30Days = await this.repairJobRepository
+            // Get last day of current month at 23:59:59
+            const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+            // Get first day of previous month at 00:00:00
+            const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+
+            // Get last day of previous month at 23:59:59
+            const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+
+            const completedJobsCurrentMonth = await this.repairJobRepository
                 .createQueryBuilder("repair_job")
                 .where("repair_job.status = :status", { status: RepairStatus.COMPLETED })
-                .andWhere("repair_job.completed_at >= :thirtyDaysAgo", { thirtyDaysAgo })
-                .andWhere("repair_job.completed_at <= :now", { now })
+                .andWhere("repair_job.completed_at >= :currentMonthStart", { currentMonthStart })
+                .andWhere("repair_job.completed_at <= :currentMonthEnd", { currentMonthEnd })
                 .select(["repair_job.total_cost"])
                 .getMany();
 
-            const currentTotalRevenue = completedJobsLast30Days.reduce((sum, job) => 
+            const currentTotalRevenue = completedJobsCurrentMonth.reduce((sum, job) =>
                 sum + Number(job.total_cost || 0), 0
             );
 
-            const currentJobsCompleted = completedJobsLast30Days.length;
+            const currentJobsCompleted = completedJobsCurrentMonth.length;
 
             const currentNewClients = await this.customerRepository
                 .createQueryBuilder("customer")
-                .where("customer.created_at >= :thirtyDaysAgo", { thirtyDaysAgo })
-                .andWhere("customer.created_at <= :now", { now })
+                .where("customer.created_at >= :currentMonthStart", { currentMonthStart })
+                .andWhere("customer.created_at <= :currentMonthEnd", { currentMonthEnd })
                 .getCount();
 
-            const completedJobsPrevious30Days = await this.repairJobRepository
+            const completedJobsPreviousMonth = await this.repairJobRepository
                 .createQueryBuilder("repair_job")
                 .where("repair_job.status = :status", { status: RepairStatus.COMPLETED })
-                .andWhere("repair_job.completed_at >= :sixtyDaysAgo", { sixtyDaysAgo })
-                .andWhere("repair_job.completed_at < :thirtyDaysAgo", { thirtyDaysAgo })
+                .andWhere("repair_job.completed_at >= :previousMonthStart", { previousMonthStart })
+                .andWhere("repair_job.completed_at <= :previousMonthEnd", { previousMonthEnd })
                 .select(["repair_job.total_cost"])
                 .getMany();
 
-            const previousTotalRevenue = completedJobsPrevious30Days.reduce((sum, job) => 
+            const previousTotalRevenue = completedJobsPreviousMonth.reduce((sum, job) =>
                 sum + Number(job.total_cost || 0), 0
             );
 
-            const previousJobsCompleted = completedJobsPrevious30Days.length;
+            const previousJobsCompleted = completedJobsPreviousMonth.length;
 
             const previousNewClients = await this.customerRepository
                 .createQueryBuilder("customer")
-                .where("customer.created_at >= :sixtyDaysAgo", { sixtyDaysAgo })
-                .andWhere("customer.created_at < :thirtyDaysAgo", { thirtyDaysAgo })
+                .where("customer.created_at >= :previousMonthStart", { previousMonthStart })
+                .andWhere("customer.created_at <= :previousMonthEnd", { previousMonthEnd })
                 .getCount();
 
             const calculatePercentageChange = (current: number, previous: number): number => {
