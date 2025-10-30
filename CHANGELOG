@@ -3,6 +3,34 @@
 
 ## [1.0.0] 2025-10-29
 ### Added
+- **Customer Pagination System**: Server-side pagination for customer list and search
+  - Added page and limit parameters to CustomerService.getAll method
+  - Added page and limit parameters to CustomerService.search method
+  - Paginated response structure with metadata (data, total, page, limit, totalPages)
+  - Skip and take logic for offset-based pagination
+  - Default limit of 15 customers per page
+  - Total count calculation for pagination metadata
+  - Automatic totalPages calculation based on total count and limit
+  - findAndCount() usage for efficient query execution
+
+### Changed
+- **Enhanced CustomerController for pagination**
+  - Updated getAll to parse page and limit query parameters
+  - Updated search to parse page and limit query parameters
+  - Default values: page=1, limit=15
+  - Returns paginated response with metadata instead of raw array
+- **Improved CustomerService data retrieval**
+  - Modified getAll to return paginated response object
+  - Modified search to return paginated response object
+  - Maintains ordering by created_at DESC with pagination
+
+### Technical Improvements
+- Implemented efficient offset-based pagination with TypeORM
+- Optimized database queries using findAndCount for single-query execution
+- Proper pagination metadata for frontend integration
+
+## [1.0.0] 2025-10-29
+### Added
 - **Customer Search Functionality**: Server-side search endpoint for customers
   - Added search method in CustomerService with TypeORM QueryBuilder
   - Case-insensitive search using LOWER() and LIKE operators

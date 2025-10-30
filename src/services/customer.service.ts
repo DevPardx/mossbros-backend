@@ -66,28 +66,40 @@ export class CustomerService {
         });
     };
 
-    static getAll = async () => {
+    static getAll = async (page: number = 1, limit: number = 15) => {
         try {
-            const customers = await this.customerRepository.find({
+            const skip = (page - 1) * limit;
+
+            const [customers, total] = await this.customerRepository.findAndCount({
                 relations: ["motorcycle", "motorcycle.brand", "motorcycle.model"],
-                order: { created_at: "DESC" }
+                order: { created_at: "DESC" },
+                take: limit,
+                skip: skip
             });
-            return customers;
+
+            return {
+                data: customers,
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            };
         } catch (error) {
             console.log(error);
             throw new InternalServerError("Error al obtener clientes");
         }
     };
 
-    static search = async (query: string) => {
+    static search = async (query: string, page: number = 1, limit: number = 15) => {
         try {
             if (!query || query.trim() === "") {
-                return await this.getAll();
+                return await this.getAll(page, limit);
             }
 
             const searchTerm = `%${query.toLowerCase()}%`;
+            const skip = (page - 1) * limit;
 
-            const customers = await this.customerRepository
+            const queryBuilder = this.customerRepository
                 .createQueryBuilder("customer")
                 .leftJoinAndSelect("customer.motorcycle", "motorcycle")
                 .leftJoinAndSelect("motorcycle.brand", "brand")
@@ -95,9 +107,18 @@ export class CustomerService {
                 .where("LOWER(customer.name) LIKE :searchTerm", { searchTerm })
                 .orWhere("LOWER(motorcycle.plate) LIKE :searchTerm", { searchTerm })
                 .orderBy("customer.created_at", "DESC")
-                .getMany();
+                .skip(skip)
+                .take(limit);
 
-            return customers;
+            const [customers, total] = await queryBuilder.getManyAndCount();
+
+            return {
+                data: customers,
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            };
         } catch (error) {
             console.log(error);
             throw new InternalServerError("Error al buscar clientes");
