@@ -1,4 +1,5 @@
 import { AppDataSource } from "../config/typeorm";
+import { REPAIR_ESTIMATION, BUSINESS_RULES } from "../config/constants";
 import { RepairJob } from "../entities/RepairJob.entity";
 import { Service } from "../entities/Service.entity";
 import { Motorcycle } from "../entities/Motorcycle.entity";
@@ -7,13 +8,24 @@ import { RepairStatus } from "../enums";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
 import type { CreateRepairJobType, UpdateRepairJobType, RepairJobWorkflowType } from "../types";
 
+interface WorkflowRule {
+    allowed_transitions: readonly RepairStatus[];
+    can_cancel: boolean;
+    requires_confirmation: boolean;
+    description: string;
+}
+
 export class RepairJobService {
     static readonly repairJobRepository = AppDataSource.getRepository(RepairJob);
     static readonly serviceRepository = AppDataSource.getRepository(Service);
     static readonly motorcycleRepository = AppDataSource.getRepository(Motorcycle);
     static readonly customerRepository = AppDataSource.getRepository(Customer);
 
-    static readonly WORKFLOW_RULES = {
+    private static includes<T>(array: readonly T[], value: T): boolean {
+        return (array as T[]).includes(value);
+    }
+
+    static readonly WORKFLOW_RULES: Record<RepairStatus, WorkflowRule> = {
         [RepairStatus.PENDING]: {
             allowed_transitions: [RepairStatus.IN_REPAIR, RepairStatus.CANCELLED],
             can_cancel: true,
@@ -70,8 +82,17 @@ export class RepairJobService {
 
             const total_cost = services.reduce((sum, service) => sum + Number(service.price), 0);
 
-            const baseDays = services.length * 1;
-            const complexityFactor = services.some(s => s.name.toLowerCase().includes("motor") || s.name.toLowerCase().includes("engine")) ? 2 : 1;
+            // Calculate estimated completion using configuration constants
+            const baseDays = services.length * REPAIR_ESTIMATION.BASE_DAYS_PER_SERVICE;
+            const isComplexRepair = services.some(s =>
+                REPAIR_ESTIMATION.COMPLEX_REPAIR_KEYWORDS.some(keyword =>
+                    s.name.toLowerCase().includes(keyword)
+                )
+            );
+            const complexityFactor = isComplexRepair
+                ? REPAIR_ESTIMATION.COMPLEXITY_MULTIPLIERS.ENGINE_REPAIR
+                : REPAIR_ESTIMATION.COMPLEXITY_MULTIPLIERS.BASIC;
+
             const estimated_completion = new Date();
             estimated_completion.setDate(estimated_completion.getDate() + (baseDays * complexityFactor));
 
@@ -183,7 +204,7 @@ export class RepairJobService {
             }
 
             const currentWorkflow = this.WORKFLOW_RULES[repairJob.status];
-            if (!currentWorkflow.allowed_transitions.includes(new_status)) {
+            if (!this.includes(currentWorkflow.allowed_transitions, new_status)) {
                 throw new BadRequestError(`No se puede cambiar de ${repairJob.status} a ${new_status}`);
             }
 
@@ -282,7 +303,7 @@ export class RepairJobService {
                 throw new NotFoundError("Trabajo de reparación no encontrado");
             }
 
-            if (![RepairStatus.PENDING, RepairStatus.CANCELLED].includes(repairJob.status)) {
+            if (!this.includes(BUSINESS_RULES.DELETABLE_STATUSES, repairJob.status)) {
                 throw new BadRequestError("Solo se pueden eliminar trabajos en estado pendiente o cancelado");
             }
 
