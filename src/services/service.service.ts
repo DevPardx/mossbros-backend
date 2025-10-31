@@ -1,12 +1,12 @@
 import type { ServiceType } from "../types";
-import { AppDataSource } from "../config/typeorm";
+import { Repository } from "typeorm";
 import { Service } from "../entities";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
 
 export class ServiceService {
-    static readonly serviceRepository = AppDataSource.getRepository(Service);
+    constructor(private readonly serviceRepository: Repository<Service>) {}
 
-    static create = async (data: Pick<ServiceType, "name" | "price">) => {
+    async create(data: Pick<ServiceType, "name" | "price">): Promise<string> {
         try{
             const service = await this.serviceRepository.findOneBy({ name: data.name.trim().toLowerCase() });
 
@@ -26,9 +26,9 @@ export class ServiceService {
 
             throw new InternalServerError("Ocurrió un error al iniciar sesión");
         }
-    };
+    }
 
-    static getAll = async () => {
+    async getAll(): Promise<Service[]> {
         try{
             const services = await this.serviceRepository.find();
             return services;
@@ -40,9 +40,9 @@ export class ServiceService {
 
             throw new InternalServerError("Ocurrió un error al obtener los servicios");
         }
-    };
+    }
 
-    static getById = async (data: Pick<ServiceType, "id">) => {
+    async getById(data: Pick<ServiceType, "id">): Promise<Service> {
         try{
             const { id } = data;
             const service = await this.serviceRepository.findOneBy({ id });
@@ -60,9 +60,9 @@ export class ServiceService {
 
             throw new InternalServerError("Ocurrió un error al obtener el servicio");
         }
-    };
+    }
 
-    static update = async (data: Pick<ServiceType, "id" | "name" | "price" | "is_active">) => {
+    async update(data: Pick<ServiceType, "id" | "name" | "price" | "is_active">): Promise<string> {
         try{
             const { id, name, price, is_active } = data;
             const service = await this.serviceRepository.findOneBy({ id });
@@ -86,9 +86,9 @@ export class ServiceService {
 
             throw new InternalServerError("Ocurrió un error al actualizar el servicio");
         }
-    };
+    }
 
-    static delete = async (data: Pick<ServiceType, "id">) => {
+    async delete(data: Pick<ServiceType, "id">): Promise<string> {
         try{
             const { id } = data;
             const service = await this.serviceRepository.findOneBy({ id });
@@ -108,5 +108,5 @@ export class ServiceService {
 
             throw new InternalServerError("Ocurrió un error al eliminar el servicio");
         }
-    };
+    }
 }

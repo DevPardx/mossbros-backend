@@ -2,6 +2,71 @@
 <!-- Latest on top -->
 
 ## [1.0.0] 2025-10-30
+### Added - Dependency Injection Architecture
+- **Service Container System**: Centralized dependency management for the entire application
+  - Created `ServiceContainer` class for managing all service instances with lazy initialization
+  - Type-safe service instantiation with proper dependency injection
+  - Centralized repository access through container getters
+  - Clean separation of concerns between services, controllers, and routes
+  - Support for easy service mocking and testing through constructor injection
+
+- **Factory Pattern for Routes**: All route files now use factory functions
+  - Route factory functions accept `ServiceContainer` as parameter
+  - Dynamic route initialization after database connection
+  - Controllers instantiated with properly injected service dependencies
+  - Improved modularity and testability of route configurations
+
+### Changed
+- **All Services Refactored to Instance-Based Pattern** (6 services total)
+  - `BrandService`: Converted from static methods to constructor-injected repository
+  - `ModelService`: Converted from static methods to constructor-injected repository
+  - `ServiceService`: Converted from static methods to constructor-injected repository
+  - `CustomerService`: Converted from static to instance with DataSource injection for transactions
+  - `AuthService`: Converted from static methods to constructor-injected repository
+  - `RepairJobService`: Converted from static to instance with multiple repository dependencies
+  - All service methods now use instance properties instead of static AppDataSource access
+  - Added proper return type annotations for all service methods
+
+- **All Controllers Refactored to Use Dependency Injection** (6 controllers total)
+  - `BrandController`: Converted to instance-based with injected `BrandService`
+  - `ModelController`: Converted to instance-based with injected `ModelService`
+  - `ServiceController`: Converted to instance-based with injected `ServiceService`
+  - `CustomerController`: Converted to instance-based with injected `CustomerService`
+  - `AuthController`: Converted to instance-based with injected `AuthService`
+  - `RepairJobController`: Converted to instance-based with injected `RepairJobService`
+  - Added `Promise<Response>` return type annotations for all controller methods
+  - Controllers no longer access services through static methods
+
+- **Route Files Converted to Factory Pattern** (6 route files total)
+  - `brands.ts` → `createBrandRoutes(container)` factory function
+  - `models.ts` → `createModelRoutes(container)` factory function
+  - `services.ts` → `createServiceRoutes(container)` factory function
+  - `customers.ts` → `createCustomerRoutes(container)` factory function
+  - `auth.ts` → `createAuthRoutes(container)` factory function
+  - `repairJobs.ts` → `createRepairJobRoutes(container)` factory function
+  - All routes now instantiate controllers with service dependencies
+
+- **Server Configuration Enhanced**
+  - Added `ServiceContainer` initialization after database connection
+  - Routes now set up dynamically in `setupRoutes()` function after container initialization
+  - All route imports changed from default exports to named factory function imports
+  - Proper initialization order: DB → Container → Routes → Middleware
+
+### Technical Improvements
+- **Improved Testability**: Services can now be easily mocked and tested in isolation
+- **Explicit Dependencies**: All dependencies are now clearly defined in constructors
+- **Better Type Safety**: Full TypeScript type checking with explicit service types
+- **Maintainability**: Easier to understand and modify service dependencies
+- **Flexibility**: Simple to swap implementations or add new dependencies
+- **Zero Breaking Changes**: Application functionality remains completely identical
+- **Clean Architecture**: Better separation between layers (routes → controllers → services)
+
+### Fixed
+- Removed unused repository injections where not needed (simplified constructors)
+- Removed unused import statements (`Brand` from ModelService, `DataSource` from RepairJobService)
+- Fixed all TypeScript compilation warnings for unused parameters
+
+## [1.0.0] 2025-10-30
 ### Added - Production Safety & Configuration Management
 - **Environment Validation System**: Comprehensive startup validation for all required environment variables
   - Added `validateEnv()` function to check all required environment variables before startup

@@ -1,12 +1,12 @@
-import { AppDataSource } from "../config/typeorm";
+import { Repository } from "typeorm";
 import { Brand } from "../entities/Brand.entity";
 import { BadRequestError } from "../handler/error.handler";
 import type { BrandType } from "../types";
 
 export class BrandService {
-    static readonly brandRepository = AppDataSource.getRepository(Brand);
+    constructor(private readonly brandRepository: Repository<Brand>) {}
 
-    static create = async (data: Pick<BrandType, "name" | "logo_url">) => {
+    async create(data: Pick<BrandType, "name" | "logo_url">): Promise<string> {
         const brand = await this.brandRepository.findOneBy({ name: data.name.trim().toLowerCase() });
 
         if (brand) {
@@ -17,13 +17,13 @@ export class BrandService {
         await this.brandRepository.save(newBrand);
 
         return `La marca ${newBrand.name} ha sido creada`;
-    };
+    }
 
-    static getAll = async () => {
+    async getAll(): Promise<Brand[]> {
         return await this.brandRepository.find();
-    };
+    }
 
-    static getById = async (data: Pick<BrandType, "id">) => {
+    async getById(data: Pick<BrandType, "id">): Promise<Brand> {
         const { id } = data;
         const brand = await this.brandRepository.findOneBy({ id });
 
@@ -32,9 +32,9 @@ export class BrandService {
         }
 
         return brand;
-    };
+    }
 
-    static update = async (data: BrandType) => {
+    async update(data: BrandType): Promise<string> {
         const { id, name, logo_url, is_active } = data;
 
         const brand = await this.brandRepository.findOneBy({ id });
@@ -50,9 +50,9 @@ export class BrandService {
         await this.brandRepository.save(brand);
 
         return "La marca ha sido actualizada";
-    };
+    }
 
-    static delete = async (data: Pick<BrandType, "id">) => {
+    async delete(data: Pick<BrandType, "id">): Promise<string> {
         const { id } = data;
 
         const brand = await this.brandRepository.findOneBy({ id });
@@ -64,5 +64,5 @@ export class BrandService {
         await this.brandRepository.remove(brand);
 
         return `La marca ${brand.name} ha sido eliminada`;
-    };
+    }
 }

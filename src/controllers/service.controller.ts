@@ -3,33 +3,35 @@ import { ServiceService } from "../services/service.service";
 import { getRequiredParam } from "../utils/request";
 
 export class ServiceController {
-    static create = async (req: Request, res: Response) => {
+    constructor(private readonly serviceService: ServiceService) {}
+
+    create = async (req: Request, res: Response): Promise<Response> => {
         const { name, price } = req.body;
-        const response = await ServiceService.create({ name, price });
+        const response = await this.serviceService.create({ name, price });
         return res.status(201).json(response);
     };
 
-    static getAll = async (_req: Request, res: Response) => {
-        const response = await ServiceService.getAll();
+    getAll = async (_req: Request, res: Response): Promise<Response> => {
+        const response = await this.serviceService.getAll();
         return res.status(200).json(response);
     };
 
-    static getById = async (req: Request, res: Response) => {
+    getById = async (req: Request, res: Response): Promise<Response> => {
         const id = getRequiredParam(req, "id");
-        const service = await ServiceService.getById({id});
+        const service = await this.serviceService.getById({id});
         return res.status(200).json(service);
     };
 
-    static update = async (req: Request, res: Response) => {
+    update = async (req: Request, res: Response): Promise<Response> => {
         const id = getRequiredParam(req, "id");
         const { name, price, is_active } = req.body;
-        const service = await ServiceService.update({ id, name, price, is_active });
+        const service = await this.serviceService.update({ id, name, price, is_active });
         return res.status(200).json(service);
     };
 
-    static delete = async (req: Request, res: Response) => {
+    delete = async (req: Request, res: Response): Promise<Response> => {
         const id = getRequiredParam(req, "id");
-        const response = await ServiceService.delete({ id });
+        const response = await this.serviceService.delete({ id });
         return res.status(200).json(response);
     };
 }

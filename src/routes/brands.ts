@@ -3,49 +3,53 @@ import { body, param } from "express-validator";
 import { BrandController } from "../controllers/brand.controller";
 import { handleInputErrors } from "../middleware/validation";
 import { authenticate } from "../middleware/auth";
+import type { ServiceContainer } from "../services/ServiceContainer";
 
-const router = Router();
+export const createBrandRoutes = (container: ServiceContainer): Router => {
+    const router = Router();
+    const brandController = new BrandController(container.brandService);
 
-router.use(authenticate);
+    router.use(authenticate);
 
-router.post("/",
-    body("name").notEmpty().withMessage("Brand name is required")
-        .isAlpha("es-ES", { ignore: " " }).withMessage("Brand name must contain only letters and spaces"),
-    body("logo_url").notEmpty().withMessage("Logo URL is required").isURL({
-        protocols: ["http", "https"],
-        require_protocol: true,
-        allow_underscores: true
-    }).withMessage("Logo URL must be a valid HTTP or HTTPS URL"),
-    handleInputErrors,
-    BrandController.create
-);
+    router.post("/",
+        body("name").notEmpty().withMessage("Brand name is required")
+            .isAlpha("es-ES", { ignore: " " }).withMessage("Brand name must contain only letters and spaces"),
+        body("logo_url").notEmpty().withMessage("Logo URL is required").isURL({
+            protocols: ["http", "https"],
+            require_protocol: true,
+            allow_underscores: true
+        }).withMessage("Logo URL must be a valid HTTP or HTTPS URL"),
+        handleInputErrors,
+        brandController.create
+    );
 
-router.get("/",BrandController.getAll);
+    router.get("/", brandController.getAll);
 
-router.get("/:id",
-    param("id").isUUID().withMessage("Brand ID must be valid"),
-    handleInputErrors,
-    BrandController.getById
-);
+    router.get("/:id",
+        param("id").isUUID().withMessage("Brand ID must be valid"),
+        handleInputErrors,
+        brandController.getById
+    );
 
-router.put("/:id",
-    param("id").isUUID().withMessage("Brand ID must be valid"),
-    body("name").notEmpty().withMessage("Brand name is required")
-        .isAlpha("es-ES", { ignore: " " }).withMessage("Brand name must contain only letters and spaces"),
-    body("logo_url").notEmpty().withMessage("Logo URL is required").isURL({
-        protocols: ["http", "https"],
-        require_protocol: true,
-        allow_underscores: true
-    }).withMessage("Logo URL must be a valid HTTP or HTTPS URL"),
-    body("is_active").isBoolean().withMessage("is_active must be a boolean"),
-    handleInputErrors,
-    BrandController.update
-);
+    router.put("/:id",
+        param("id").isUUID().withMessage("Brand ID must be valid"),
+        body("name").notEmpty().withMessage("Brand name is required")
+            .isAlpha("es-ES", { ignore: " " }).withMessage("Brand name must contain only letters and spaces"),
+        body("logo_url").notEmpty().withMessage("Logo URL is required").isURL({
+            protocols: ["http", "https"],
+            require_protocol: true,
+            allow_underscores: true
+        }).withMessage("Logo URL must be a valid HTTP or HTTPS URL"),
+        body("is_active").isBoolean().withMessage("is_active must be a boolean"),
+        handleInputErrors,
+        brandController.update
+    );
 
-router.delete("/:id",
-    param("id").isUUID().withMessage("Brand ID must be valid"),
-    handleInputErrors,
-    BrandController.delete
-);
+    router.delete("/:id",
+        param("id").isUUID().withMessage("Brand ID must be valid"),
+        handleInputErrors,
+        brandController.delete
+    );
 
-export default router;
+    return router;
+};

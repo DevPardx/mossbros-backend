@@ -1,15 +1,17 @@
-import { AppDataSource } from "../config/typeorm";
+import { DataSource, Repository } from "typeorm";
 import { Customer } from "../entities/Customer.entity";
 import { Motorcycle } from "../entities/Motorcycle.entity";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
 import type { CustomerWithMotorcycleType, CustomerType, MotorcycleType } from "../types";
 
 export class CustomerService {
-    static readonly customerRepository = AppDataSource.getRepository(Customer);
-    static readonly motorcycleRepository = AppDataSource.getRepository(Motorcycle);
+    constructor(
+        private readonly customerRepository: Repository<Customer>,
+        private readonly dataSource: DataSource
+    ) {}
 
-    static create = async (data: CustomerWithMotorcycleType) => {
-        return await AppDataSource.transaction(async manager => {
+    async create(data: CustomerWithMotorcycleType): Promise<string> {
+        return await this.dataSource.transaction(async manager => {
             try {
                 const existingMotorcycle = await manager.findOne(Motorcycle, {
                     where: { plate: data.motorcycle_plate }
@@ -64,9 +66,9 @@ export class CustomerService {
                 throw new InternalServerError("Error al registrar el cliente");
             }
         });
-    };
+    }
 
-    static getAll = async (page: number = 1, limit: number = 15) => {
+    async getAll(page: number = 1, limit: number = 15) {
         try {
             const skip = (page - 1) * limit;
 
@@ -88,9 +90,9 @@ export class CustomerService {
             console.log(error);
             throw new InternalServerError("Error al obtener clientes");
         }
-    };
+    }
 
-    static search = async (query: string, page: number = 1, limit: number = 15) => {
+    async search(query: string, page: number = 1, limit: number = 15) {
         try {
             if (!query || query.trim() === "") {
                 return await this.getAll(page, limit);
@@ -123,9 +125,9 @@ export class CustomerService {
             console.log(error);
             throw new InternalServerError("Error al buscar clientes");
         }
-    };
+    }
 
-    static getById = async (id: string) => {
+    async getById(id: string) {
         try {
             const customer = await this.customerRepository.findOne({
                 where: { id },
@@ -143,10 +145,10 @@ export class CustomerService {
             }
             throw new InternalServerError("Error al obtener cliente");
         }
-    };
+    }
 
-    static update = async (id: string, data: Partial<CustomerWithMotorcycleType>) => {
-        return await AppDataSource.transaction(async manager => {
+    async update(id: string, data: Partial<CustomerWithMotorcycleType>) {
+        return await this.dataSource.transaction(async manager => {
             try {
                 const customer = await manager.findOne(Customer, {
                     where: { id },
@@ -195,9 +197,9 @@ export class CustomerService {
                 throw new InternalServerError("Error updating customer");
             }
         });
-    };
+    }
 
-    static delete = async (id: string) => {
+    async delete(id: string) {
         try {
             const customer = await this.customerRepository.findOneBy({ id });
 

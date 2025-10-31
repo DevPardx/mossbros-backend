@@ -1,12 +1,14 @@
-import { AppDataSource } from "../config/typeorm";
+import { Repository } from "typeorm";
 import { Model } from "../entities";
 import { BadRequestError } from "../handler/error.handler";
 import type { ModelType } from "../types";
 
 export class ModelService {
-    static readonly modelRepository = AppDataSource.getRepository(Model);
+    constructor(
+        private readonly modelRepository: Repository<Model>
+    ) {}
 
-    static create = async (data: Pick<ModelType, "name" | "brand_id">) => {
+    async create(data: Pick<ModelType, "name" | "brand_id">): Promise<string> {
         const { name } = data;
         const model = await this.modelRepository.findOneBy({ name: name.trim().toLowerCase() });
 
@@ -18,9 +20,9 @@ export class ModelService {
         await this.modelRepository.save(newModel);
 
         return `El modelo ${newModel.name} ha sido creado`;
-    };
+    }
 
-    static getAll = async (data: Pick<ModelType, "brand_id">) => {
+    async getAll(data: Pick<ModelType, "brand_id">): Promise<Model[]> {
         const { brand_id } = data;
         const models = await this.modelRepository.find({
             where: { brand: { id: brand_id } },
@@ -29,9 +31,9 @@ export class ModelService {
             }
         });
         return models;
-    };
+    }
 
-    static getById = async (data: Pick<ModelType, "id" | "brand_id">) => {
+    async getById(data: Pick<ModelType, "id" | "brand_id">): Promise<Model> {
         const { brand_id, id } = data;
 
         const model = await this.modelRepository.findOne({
@@ -46,9 +48,9 @@ export class ModelService {
         }
 
         return model;
-    };
+    }
 
-    static update = async (data: Pick<ModelType, "id" | "name" | "brand_id" | "is_active">) => {
+    async update(data: Pick<ModelType, "id" | "name" | "brand_id" | "is_active">): Promise<string> {
         const { id, name, brand_id, is_active } = data;
 
         const model = await this.modelRepository.findOneBy({ id });
@@ -70,9 +72,9 @@ export class ModelService {
         await this.modelRepository.save(model);
 
         return `El modelo ${model.name} ha sido actualizado`;
-    };
+    }
 
-    static delete = async (data: Pick<ModelType, "id">) => {
+    async delete(data: Pick<ModelType, "id">): Promise<string> {
         const { id } = data;
 
         const model = await this.modelRepository.findOneBy({ id });
@@ -84,5 +86,5 @@ export class ModelService {
         await this.modelRepository.remove(model);
 
         return `El modelo ${model.name} ha sido eliminado`;
-    };
+    }
 }

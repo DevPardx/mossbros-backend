@@ -1,4 +1,4 @@
-import { AppDataSource } from "../config/typeorm";
+import { Repository } from "typeorm";
 import { REPAIR_ESTIMATION, BUSINESS_RULES } from "../config/constants";
 import { RepairJob } from "../entities/RepairJob.entity";
 import { Service } from "../entities/Service.entity";
@@ -16,12 +16,14 @@ interface WorkflowRule {
 }
 
 export class RepairJobService {
-    static readonly repairJobRepository = AppDataSource.getRepository(RepairJob);
-    static readonly serviceRepository = AppDataSource.getRepository(Service);
-    static readonly motorcycleRepository = AppDataSource.getRepository(Motorcycle);
-    static readonly customerRepository = AppDataSource.getRepository(Customer);
+    constructor(
+        private readonly repairJobRepository: Repository<RepairJob>,
+        private readonly motorcycleRepository: Repository<Motorcycle>,
+        private readonly serviceRepository: Repository<Service>,
+        private readonly customerRepository: Repository<Customer>
+    ) {}
 
-    private static includes<T>(array: readonly T[], value: T): boolean {
+    private includes<T>(array: readonly T[], value: T): boolean {
         return (array as T[]).includes(value);
     }
 
@@ -64,7 +66,7 @@ export class RepairJobService {
         }
     };
 
-    static create = async (data: CreateRepairJobType) => {
+    async create(data: CreateRepairJobType): Promise<string> {
         try {
             const motorcycle = await this.motorcycleRepository.findOne({
                 where: { id: data.motorcycle_id },
@@ -114,9 +116,9 @@ export class RepairJobService {
             }
             throw new InternalServerError("Error al crear el trabajo de reparación");
         }
-    };
+    }
 
-    static getAll = async (filters?: { status?: RepairStatus; motorcycle_id?: string }) => {
+    async getAll(filters?: { status?: RepairStatus; motorcycle_id?: string }) {
         try {
             const query = this.repairJobRepository.createQueryBuilder("repair_job")
                 .leftJoinAndSelect("repair_job.motorcycle", "motorcycle")
@@ -141,9 +143,9 @@ export class RepairJobService {
             }
             throw new InternalServerError("Error al obtener los trabajos de reparación");
         }
-    };
+    }
 
-    static getById = async (id: string) => {
+    async getById(id: string) {
         try {
             const repairJob = await this.repairJobRepository.findOne({
                 where: { id },
@@ -162,9 +164,9 @@ export class RepairJobService {
             }
             throw new InternalServerError("Error al obtener el trabajo de reparación");
         }
-    };
+    }
 
-    static update = async (id: string, data: UpdateRepairJobType) => {
+    async update(id: string, data: UpdateRepairJobType) {
         try {
             const repairJob = await this.repairJobRepository.findOne({
                 where: { id },
@@ -190,9 +192,9 @@ export class RepairJobService {
             }
             throw new InternalServerError("Error al actualizar el trabajo de reparación");
         }
-    };
+    }
 
-    static updateStatus = async (id: string, new_status: RepairStatus) => {
+    async updateStatus(id: string, new_status: RepairStatus) {
         try {
             const repairJob = await this.repairJobRepository.findOne({
                 where: { id },
@@ -203,7 +205,7 @@ export class RepairJobService {
                 throw new NotFoundError("Trabajo de reparación no encontrado");
             }
 
-            const currentWorkflow = this.WORKFLOW_RULES[repairJob.status];
+            const currentWorkflow = RepairJobService.WORKFLOW_RULES[repairJob.status];
             if (!this.includes(currentWorkflow.allowed_transitions, new_status)) {
                 throw new BadRequestError(`No se puede cambiar de ${repairJob.status} a ${new_status}`);
             }
@@ -228,9 +230,9 @@ export class RepairJobService {
             }
             throw new InternalServerError("Error al actualizar el estado");
         }
-    };
+    }
 
-    static cancel = async (id: string) => {
+    async cancel(id: string) {
         try {
             const repairJob = await this.repairJobRepository.findOne({
                 where: { id },
@@ -241,7 +243,7 @@ export class RepairJobService {
                 throw new NotFoundError("Trabajo de reparación no encontrado");
             }
 
-            const currentWorkflow = this.WORKFLOW_RULES[repairJob.status];
+            const currentWorkflow = RepairJobService.WORKFLOW_RULES[repairJob.status];
             if (!currentWorkflow.can_cancel) {
                 throw new BadRequestError("No se puede cancelar un trabajo con el estado actual");
             }
@@ -257,19 +259,19 @@ export class RepairJobService {
             }
             throw new InternalServerError("Error al cancelar el trabajo de reparación");
         }
-    };
+    }
 
-    static getWorkflowInfo = (status: RepairStatus): RepairJobWorkflowType => {
-        const workflow = this.WORKFLOW_RULES[status];
+    getWorkflowInfo(status: RepairStatus): RepairJobWorkflowType {
+        const workflow = RepairJobService.WORKFLOW_RULES[status];
         return {
             current_status: status,
             allowed_transitions: workflow.allowed_transitions,
             can_cancel: workflow.can_cancel,
             requires_confirmation: workflow.requires_confirmation
         };
-    };
+    }
 
-    static getWorkflow = async (id: string) => {
+    async getWorkflow(id: string) {
         try {
             const repairJob = await this.repairJobRepository.findOne({
                 where: { id }
@@ -282,7 +284,7 @@ export class RepairJobService {
             return {
                 repair_job_id: id,
                 workflow: this.getWorkflowInfo(repairJob.status),
-                description: this.WORKFLOW_RULES[repairJob.status].description
+                description: RepairJobService.WORKFLOW_RULES[repairJob.status].description
             };
 
         } catch (error) {
@@ -291,9 +293,9 @@ export class RepairJobService {
             }
             throw new InternalServerError("Error al obtener información del workflow");
         }
-    };
+    }
 
-    static delete = async (id: string) => {
+    async delete(id: string) {
         try {
             const repairJob = await this.repairJobRepository.findOne({
                 where: { id }
@@ -317,9 +319,9 @@ export class RepairJobService {
             }
             throw new InternalServerError("Error al eliminar el trabajo de reparación");
         }
-    };
+    }
 
-    static getStatistics = async () => {
+    async getStatistics() {
         try {
             const now = new Date();
 

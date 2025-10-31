@@ -4,12 +4,14 @@ import { RepairStatus } from "../enums";
 import { getRequiredParam } from "../utils/request";
 
 export class RepairJobController {
-    static create = async (req: Request, res: Response) => {
-        const response = await RepairJobService.create(req.body);
+    constructor(private readonly repairJobService: RepairJobService) {}
+
+    create = async (req: Request, res: Response): Promise<Response> => {
+        const response = await this.repairJobService.create(req.body);
         return res.status(201).json(response);
     };
 
-    static getAll = async (req: Request, res: Response) => {
+    getAll = async (req: Request, res: Response): Promise<Response> => {
         const { status, motorcycle_id } = req.query;
 
         const filters: { status?: RepairStatus; motorcycle_id?: string } = {};
@@ -22,49 +24,49 @@ export class RepairJobController {
             filters.motorcycle_id = motorcycle_id;
         }
 
-        const repairJobs = await RepairJobService.getAll(filters);
+        const repairJobs = await this.repairJobService.getAll(filters);
         return res.status(200).json(repairJobs);
     };
 
-    static getById = async (req: Request, res: Response) => {
+    getById = async (req: Request, res: Response): Promise<Response> => {
         const id = getRequiredParam(req, "id");
-        const repairJob = await RepairJobService.getById(id);
+        const repairJob = await this.repairJobService.getById(id);
         return res.status(200).json(repairJob);
     };
 
-    static update = async (req: Request, res: Response) => {
+    update = async (req: Request, res: Response): Promise<Response> => {
         const id = getRequiredParam(req, "id");
-        const response = await RepairJobService.update(id, req.body);
+        const response = await this.repairJobService.update(id, req.body);
         return res.status(200).json(response);
     };
 
-    static updateStatus = async (req: Request, res: Response) => {
+    updateStatus = async (req: Request, res: Response): Promise<Response> => {
         const id = getRequiredParam(req, "id");
         const { status } = req.body;
-        const response = await RepairJobService.updateStatus(id, status);
+        const response = await this.repairJobService.updateStatus(id, status);
         return res.status(200).json(response);
     };
 
-    static cancel = async (req: Request, res: Response) => {
+    cancel = async (req: Request, res: Response): Promise<Response> => {
         const id = getRequiredParam(req, "id");
-        const response = await RepairJobService.cancel(id);
+        const response = await this.repairJobService.cancel(id);
         return res.status(200).json(response);
     };
 
-    static delete = async (req: Request, res: Response) => {
+    delete = async (req: Request, res: Response): Promise<Response> => {
         const id = getRequiredParam(req, "id");
-        const response = await RepairJobService.delete(id);
+        const response = await this.repairJobService.delete(id);
         return res.status(200).json(response);
     };
 
-    static getWorkflow = async (req: Request, res: Response) => {
+    getWorkflow = async (req: Request, res: Response): Promise<Response> => {
         const id = getRequiredParam(req, "id");
-        const workflow = await RepairJobService.getWorkflow(id);
+        const workflow = await this.repairJobService.getWorkflow(id);
         return res.status(200).json(workflow);
     };
 
-    static getStatistics = async (_req: Request, res: Response) => {
-        const response = await RepairJobService.getStatistics();
+    getStatistics = async (_req: Request, res: Response): Promise<Response> => {
+        const response = await this.repairJobService.getStatistics();
         return res.status(200).json(response);
     };
 }
