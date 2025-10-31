@@ -12,7 +12,8 @@ export default defineConfig([
     rules: {
       "quotes": ["error", "double"],
       "semi": ["error", "always"]
-    }
+    },
+    ignores: ["./dist"]
   },
   tseslint.configs.recommended,
 ]);

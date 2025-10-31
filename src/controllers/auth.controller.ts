@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
+import { getRequiredParam } from "../utils/request";
 
 export class AuthController {
     static login = async (req: Request, res: Response) => {
@@ -9,7 +10,7 @@ export class AuthController {
         const { email, password, remember_me } = req.body;
 
         const response = await AuthService.login({ email, password, remember_me });
-        
+
         res.cookie("_token", response, {
             httpOnly: false,
             secure: process.env.NODE_ENV === "production",
@@ -20,7 +21,7 @@ export class AuthController {
         return res.status(200).json();
     };
 
-    static logout = async (req: Request, res: Response) => {
+    static logout = async (_req: Request, res: Response) => {
         res.clearCookie("_token");
         return res.status(200).json();
     };
@@ -54,14 +55,14 @@ export class AuthController {
     };
 
     static verifyPasswordResetToken = async (req: Request, res: Response) => {
-        const { token } = req.params;
+        const token = getRequiredParam(req, "token");
 
         await AuthService.verifyPasswordResetToken(token);
         return res.status(200).json("Token válido");
     };
 
     static resetPassword = async (req: Request, res: Response) => {
-        const { token } = req.params;
+        const token = getRequiredParam(req, "token");
         const { new_password } = req.body;
 
         const response = await AuthService.resetPasswordWithToken({ token, new_password });

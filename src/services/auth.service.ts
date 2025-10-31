@@ -152,8 +152,8 @@ export class AuthService {
 
             await this.userRepository.update(user.id, {
                 password: hashedPassword,
-                token: null,
-                token_expires_at: null
+                token: undefined,
+                token_expires_at: undefined
             });
 
             return "Contraseña restablecida exitosamente";

@@ -32,11 +32,17 @@ export async function seedMotorcycles() {
 
     const getRandomBrandModel = () => {
         const randomBrand = brands[Math.floor(Math.random() * brands.length)];
+        if (!randomBrand) {
+            throw new Error("No brand available");
+        }
         const compatibleModels = models.filter(m => m.brand_id === randomBrand.id);
         if (compatibleModels.length === 0) {
             return getRandomBrandModel();
         }
         const randomModel = compatibleModels[Math.floor(Math.random() * compatibleModels.length)];
+        if (!randomModel) {
+            throw new Error("No model available");
+        }
         return { brand: randomBrand, model: randomModel };
     };
 
@@ -53,11 +59,16 @@ export async function seedMotorcycles() {
     console.log("Creating motorcycles...");
 
     const motorcycles = [];
-    
+
     for (let i = 0; i < Math.min(customers.length, motorcyclePlates.length); i++) {
         const customer = customers[i];
-        const { brand, model } = getRandomBrandModel();
         const plate = motorcyclePlates[i];
+
+        if (!customer || !plate) {
+            continue;
+        }
+
+        const { brand, model } = getRandomBrandModel();
 
         const motorcycle = motorcycleRepository.create({
             plate: plate,

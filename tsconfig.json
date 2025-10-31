@@ -6,13 +6,21 @@
         "moduleResolution": "nodenext",
         "module": "NodeNext",
         "lib": ["ESNext"],
-        "strict": false,
+        "strict": true,
+        "strictPropertyInitialization": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
         "sourceMap": true,
         "esModuleInterop": true,
         "declaration": true,
         "experimentalDecorators": true,
-        "emitDecoratorMetadata": true
+        "emitDecoratorMetadata": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
     },
     "include": ["src/**/*.ts"],
-    "exclude": ["src/**/*.test.ts"]
+    "exclude": ["src/**/*.test.ts", "node_modules"]
 }

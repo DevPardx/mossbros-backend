@@ -86,7 +86,7 @@ export type UpdateRepairJobType = {
 
 export type RepairJobWorkflowType = {
     current_status: string;
-    allowed_transitions: string[];
+    allowed_transitions: readonly string[];
     can_cancel: boolean;
     requires_confirmation: boolean;
 }

@@ -21,9 +21,17 @@ const connectDB = async () => {
   try {
     await AppDataSource.initialize();
     console.log(colors.magenta.bold("Database connected successfully"));
-    await runAllSeeds();
+
+    if (process.env.NODE_ENV === "development") {
+      console.log(colors.cyan.bold("Running database seeds..."));
+      await runAllSeeds();
+      console.log(colors.green.bold("Database seeding completed"));
+    } else {
+      console.log(colors.yellow.bold("Skipping seeds in non-development environment"));
+    }
   } catch (error) {
     console.error(colors.red.bold("Error connecting to the database"), error);
+    process.exit(1);
   }
 };
 
