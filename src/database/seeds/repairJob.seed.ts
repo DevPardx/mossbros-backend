@@ -81,6 +81,11 @@ export async function seedRepairJobs() {
     for (let i = 0; i < Math.min(repairJobsData.length, motorcycles.length); i++) {
         const jobData = repairJobsData[i];
         const motorcycle = motorcycles[i];
+
+        if (!jobData || !motorcycle) {
+            continue;
+        }
+
         const jobServices = getRandomServices();
 
         const total_cost = jobServices.reduce((sum, service) => sum + Number(service.price), 0);
@@ -106,6 +111,9 @@ export async function seedRepairJobs() {
 
     savedRepairJobs.forEach((job, index) => {
         const motorcycle = motorcycles[index];
+        if (!motorcycle) {
+            return;
+        }
         console.log(`✅ Created repair job: ${job.status} for motorcycle ${motorcycle.plate} - Total: $${job.total_cost}`);
     });
 

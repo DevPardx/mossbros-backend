@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { CustomerService } from "../services/customer.service";
+import { getRequiredParam } from "../utils/request";
 
 export class CustomerController {
     static create = async (req: Request, res: Response) => {
@@ -23,19 +24,19 @@ export class CustomerController {
     };
 
     static getById = async (req: Request, res: Response) => {
-        const { id } = req.params;
+        const id = getRequiredParam(req, "id");
         const response = await CustomerService.getById(id);
         res.status(200).json(response);
     };
 
     static update = async (req: Request, res: Response) => {
-        const { id } = req.params;
+        const id = getRequiredParam(req, "id");
         const response = await CustomerService.update(id, req.body);
         res.status(200).json(response);
     };
 
     static delete = async (req: Request, res: Response) => {
-        const { id } = req.params;
+        const id = getRequiredParam(req, "id");
         const response = await CustomerService.delete(id);
         res.status(200).json(response);
     };

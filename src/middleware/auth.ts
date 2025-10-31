@@ -3,6 +3,7 @@ import { AppDataSource } from "../config/typeorm";
 import jwt from "jsonwebtoken";
 import { User } from "../entities";
 import { BadRequestError, NotFoundError, UnauthorizedError } from "../handler/error.handler";
+import { env } from "../config/env";
 
 /* eslint-disable @typescript-eslint/no-namespace */
 declare global {
@@ -13,16 +14,16 @@ declare global {
     }
 }
 
-export const verifyJwtCookie = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyJwtCookie = async (req: Request, _res: Response, next: NextFunction) => {
     try {
         const userRepository = AppDataSource.getRepository(User);
         const token = req.cookies.token;
-        
+
         if (!token) {
             throw new UnauthorizedError("No token provided");
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
+        const decoded = jwt.verify(token, env.JWT_SECRET) as { id: string };
 
         const user = await userRepository.findOneBy({ id: decoded.id });
         if (!user) {
@@ -39,7 +40,7 @@ export const verifyJwtCookie = async (req: Request, res: Response, next: NextFun
     }
 };
 
-export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
+export const authenticate = async (req: Request, _res: Response, next: NextFunction) => {
     const bearer = req.headers.authorization;
 
     if(!bearer){
@@ -53,14 +54,14 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     }
 
     try{
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, env.JWT_SECRET) as { id?: string };
 
         if(typeof decoded === "object" && decoded.id){
             const user = await AppDataSource.getRepository(User).findOne({
                 where: { id: decoded.id },
                 select: ["id", "email", "role", "phone", "name"]
             });
-            req.user = user;
+            req.user = user || undefined;
             next();
         }
     }
