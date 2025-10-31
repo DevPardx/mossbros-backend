@@ -3,41 +3,43 @@ import { CustomerService } from "../services/customer.service";
 import { getRequiredParam } from "../utils/request";
 
 export class CustomerController {
-    static create = async (req: Request, res: Response) => {
-        const response = await CustomerService.create(req.body);
+    constructor(private readonly customerService: CustomerService) {}
+
+    create = async (req: Request, res: Response): Promise<void> => {
+        const response = await this.customerService.create(req.body);
         res.status(201).json(response);
     };
 
-    static getAll = async (req: Request, res: Response) => {
+    getAll = async (req: Request, res: Response): Promise<void> => {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 15;
-        const response = await CustomerService.getAll(page, limit);
+        const response = await this.customerService.getAll(page, limit);
         res.status(200).json(response);
     };
 
-    static search = async (req: Request, res: Response) => {
+    search = async (req: Request, res: Response): Promise<void> => {
         const { q } = req.query;
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 15;
-        const response = await CustomerService.search(q as string || "", page, limit);
+        const response = await this.customerService.search(q as string || "", page, limit);
         res.status(200).json(response);
     };
 
-    static getById = async (req: Request, res: Response) => {
+    getById = async (req: Request, res: Response): Promise<void> => {
         const id = getRequiredParam(req, "id");
-        const response = await CustomerService.getById(id);
+        const response = await this.customerService.getById(id);
         res.status(200).json(response);
     };
 
-    static update = async (req: Request, res: Response) => {
+    update = async (req: Request, res: Response): Promise<void> => {
         const id = getRequiredParam(req, "id");
-        const response = await CustomerService.update(id, req.body);
+        const response = await this.customerService.update(id, req.body);
         res.status(200).json(response);
     };
 
-    static delete = async (req: Request, res: Response) => {
+    delete = async (req: Request, res: Response): Promise<void> => {
         const id = getRequiredParam(req, "id");
-        const response = await CustomerService.delete(id);
+        const response = await this.customerService.delete(id);
         res.status(200).json(response);
     };
 }

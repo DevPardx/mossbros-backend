@@ -1,5 +1,5 @@
 import { transport } from "../config/nodemailer";
-import { AppDataSource } from "../config/typeorm";
+import { Repository } from "typeorm";
 import { User } from "../entities/User.entity";
 import { AppError, BadRequestError, InternalServerError, NotFoundError, UnauthorizedError } from "../handler/error.handler";
 import type { ForgotPasswordType, LoginType, ResetPasswordType } from "../types";
@@ -8,9 +8,9 @@ import { generateJWT, generateToken, verifyJWT } from "../utils/token";
 import { EmailTemplates } from "../emails/email-templates";
 
 export class AuthService {
-    static readonly userRepository = AppDataSource.getRepository(User);
+    constructor(private readonly userRepository: Repository<User>) {}
 
-    static login = async (data: LoginType) => {
+    async login(data: LoginType): Promise<string> {
         try{
             const { email, password, remember_me } = data;
 
@@ -37,9 +37,9 @@ export class AuthService {
 
             throw new InternalServerError("Ocurrió un error al iniciar sesión");
         }
-    };
+    }
 
-    static verify = async (token: string) => {
+    async verify(token: string): Promise<{ id: string; email: string; name: string }> {
         try {
             const decoded = verifyJWT(token);
 
@@ -65,9 +65,9 @@ export class AuthService {
 
             throw new InternalServerError("Ocurrió un error al verificar el token");
         }
-    };
+    }
 
-    static forgotPassword = async (data: ForgotPasswordType) => {
+    async forgotPassword(data: ForgotPasswordType): Promise<string> {
         try {
             const { email } = data;
 
@@ -78,7 +78,7 @@ export class AuthService {
             }
 
             const token = generateToken();
-            
+
             const expiresAt = new Date();
             expiresAt.setMinutes(expiresAt.getMinutes() + 10);
 
@@ -108,9 +108,9 @@ export class AuthService {
 
             throw new InternalServerError("Ocurrió un error al procesar la solicitud");
         }
-    };
+    }
 
-    static verifyPasswordResetToken = async (token: string) => {
+    async verifyPasswordResetToken(token: string): Promise<boolean> {
         try {
             const user = await this.userRepository.findOneBy({ token });
 
@@ -134,9 +134,9 @@ export class AuthService {
 
             throw new InternalServerError("Ocurrió un error al verificar el token");
         }
-    };
+    }
 
-    static resetPasswordWithToken = async (data: ResetPasswordType) => {
+    async resetPasswordWithToken(data: ResetPasswordType): Promise<string> {
         const { token, new_password } = data;
 
         try {
@@ -164,5 +164,5 @@ export class AuthService {
 
             throw new InternalServerError("Ocurrió un error al restablecer la contraseña");
         }
-    };
+    }
 }
