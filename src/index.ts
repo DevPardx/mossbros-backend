@@ -1,7 +1,7 @@
-import colors from "colors";
 import { validateEnv, env } from "./config/env";
-import server from "./server";
+import server, { initializeRateLimiters } from "./server";
 import { client } from "./config/redis";
+import logger from "./utils/logger";
 
 validateEnv();
 
@@ -10,15 +10,17 @@ const PORT = env.PORT || 4000;
 const main = async () => {
   try {
     await client.connect();
-    console.log(colors.green.bold("Redis connected successfully"));
+
+    // Initialize rate limiters after Redis connects
+    initializeRateLimiters(client);
 
     server.listen(PORT, () => {
-      console.log(colors.cyan.bold(`\n🚀 Server is running on port ${PORT}`));
-      console.log(colors.cyan(`   Environment: ${env.NODE_ENV}`));
-      console.log(colors.cyan(`   Frontend URL: ${env.FRONTEND_URL}\n`));
+      logger.info(`Server is running on port ${PORT}`);
+      logger.info(`Environment: ${env.NODE_ENV}`);
+      logger.info(`Frontend URL: ${env.FRONTEND_URL}`);
     });
   } catch (error) {
-    console.error(colors.red.bold("Failed to start server:"), error);
+    logger.error("Failed to start server:", error);
     process.exit(1);
   }
 };

@@ -1,5 +1,4 @@
 import winston from "winston";
-import { env } from "../config/env";
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 
@@ -20,8 +19,8 @@ const productionFormat = combine(
     logFormat
 );
 
-const isDevelopment = env.NODE_ENV === "development";
-const isProduction = env.NODE_ENV === "production";
+const isDevelopment = process.env.NODE_ENV === "development";
+const isProduction = process.env.NODE_ENV === "production";
 
 export const logger = winston.createLogger({
     level: isDevelopment ? "debug" : "info",

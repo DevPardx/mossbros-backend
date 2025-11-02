@@ -1,5 +1,6 @@
 import { createClient } from "redis";
 import { env } from "./env";
+import logger from "../utils/logger";
 
 export const client = createClient({
     socket: {
@@ -9,4 +10,6 @@ export const client = createClient({
     password: env.REDIS_PASSWORD
 });
 
-client.on("error", (err) => console.error("Redis Client Error", err));
+client.on("error", (err) => logger.error("Redis Client Error", err));
+client.on("connect", () => logger.info("Redis connected successfully"));
+client.on("disconnect", () => logger.warn("Redis disconnected"));
