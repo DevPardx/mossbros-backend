@@ -6,6 +6,7 @@ import { Motorcycle } from "../entities/Motorcycle.entity";
 import { Customer } from "../entities/Customer.entity";
 import { RepairStatus } from "../enums";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
+import { assertExists, assertSameLength } from "../utils/validation.utils";
 import type { CreateRepairJobType, UpdateRepairJobType, RepairJobWorkflowType } from "../types";
 
 interface WorkflowRule {
@@ -25,6 +26,65 @@ export class RepairJobService {
 
     private includes<T>(array: readonly T[], value: T): boolean {
         return (array as T[]).includes(value);
+    }
+
+    private calculatePercentageChange(current: number, previous: number): number {
+        if (previous === 0) {
+            return current > 0 ? 100 : 0;
+        }
+        return Number((((current - previous) / previous) * 100).toFixed(2));
+    }
+
+    private getMonthBoundaries(year: number, month: number): { start: Date; end: Date } {
+        const start = new Date(year, month, 1, 0, 0, 0, 0);
+        const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
+        return { start, end };
+    }
+
+    private async getCompletedJobsInPeriod(start: Date, end: Date): Promise<RepairJob[]> {
+        return await this.repairJobRepository
+            .createQueryBuilder("repair_job")
+            .where("repair_job.status = :status", { status: RepairStatus.COMPLETED })
+            .andWhere("repair_job.completed_at >= :start", { start })
+            .andWhere("repair_job.completed_at <= :end", { end })
+            .select(["repair_job.total_cost"])
+            .getMany();
+    }
+
+    // Helper method: Get new customer count in a time period
+    private async getNewCustomersCountInPeriod(start: Date, end: Date): Promise<number> {
+        return await this.customerRepository
+            .createQueryBuilder("customer")
+            .where("customer.created_at >= :start", { start })
+            .andWhere("customer.created_at <= :end", { end })
+            .getCount();
+    }
+
+    private calculateRevenueFromJobs(jobs: RepairJob[]): number {
+        return jobs.reduce((sum, job) => sum + Number(job.total_cost || 0), 0);
+    }
+
+    private calculateTotalCost(services: Service[]): number {
+        return services.reduce((sum, service) => sum + Number(service.price), 0);
+    }
+
+    private isComplexRepair(services: Service[]): boolean {
+        return services.some(s =>
+            REPAIR_ESTIMATION.COMPLEX_REPAIR_KEYWORDS.some(keyword =>
+                s.name.toLowerCase().includes(keyword)
+            )
+        );
+    }
+
+    private calculateEstimatedCompletion(services: Service[]): Date {
+        const baseDays = services.length * REPAIR_ESTIMATION.BASE_DAYS_PER_SERVICE;
+        const complexityFactor = this.isComplexRepair(services)
+            ? REPAIR_ESTIMATION.COMPLEXITY_MULTIPLIERS.ENGINE_REPAIR
+            : REPAIR_ESTIMATION.COMPLEXITY_MULTIPLIERS.BASIC;
+
+        const estimatedDate = new Date();
+        estimatedDate.setDate(estimatedDate.getDate() + (baseDays * complexityFactor));
+        return estimatedDate;
     }
 
     static readonly WORKFLOW_RULES: Record<RepairStatus, WorkflowRule> = {
@@ -72,36 +132,24 @@ export class RepairJobService {
                 where: { id: data.motorcycle_id },
                 relations: ["customer"]
             });
-
-            if (!motorcycle) {
-                throw new NotFoundError("Motocicleta no encontrada");
-            }
+            assertExists(motorcycle, "Motocicleta");
 
             const services = await this.serviceRepository.findByIds(data.service_ids);
-            if (services.length !== data.service_ids.length) {
-                throw new BadRequestError("Uno o más servicios no encontrados");
-            }
-
-            const total_cost = services.reduce((sum, service) => sum + Number(service.price), 0);
-
-            // Calculate estimated completion using configuration constants
-            const baseDays = services.length * REPAIR_ESTIMATION.BASE_DAYS_PER_SERVICE;
-            const isComplexRepair = services.some(s =>
-                REPAIR_ESTIMATION.COMPLEX_REPAIR_KEYWORDS.some(keyword =>
-                    s.name.toLowerCase().includes(keyword)
-                )
+            assertSameLength(
+                services,
+                data.service_ids,
+                "Uno o más servicios no encontrados"
             );
-            const complexityFactor = isComplexRepair
-                ? REPAIR_ESTIMATION.COMPLEXITY_MULTIPLIERS.ENGINE_REPAIR
-                : REPAIR_ESTIMATION.COMPLEXITY_MULTIPLIERS.BASIC;
 
-            const estimated_completion = new Date();
-            estimated_completion.setDate(estimated_completion.getDate() + (baseDays * complexityFactor));
+            const total_cost = this.calculateTotalCost(services);
+            const estimated_completion = data.estimated_completion
+                ? new Date(data.estimated_completion)
+                : this.calculateEstimatedCompletion(services);
 
             const repairJob = this.repairJobRepository.create({
                 motorcycle_id: data.motorcycle_id,
                 notes: data.notes,
-                estimated_completion: data.estimated_completion ? new Date(data.estimated_completion) : estimated_completion,
+                estimated_completion,
                 total_cost,
                 services
             });
@@ -324,69 +372,27 @@ export class RepairJobService {
     async getStatistics() {
         try {
             const now = new Date();
+            const currentMonth = this.getMonthBoundaries(now.getFullYear(), now.getMonth());
+            const previousMonth = this.getMonthBoundaries(now.getFullYear(), now.getMonth() - 1);
 
-            // Get first day of current month at 00:00:00
-            const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            const [completedJobsCurrentMonth, currentNewClients] = await Promise.all([
+                this.getCompletedJobsInPeriod(currentMonth.start, currentMonth.end),
+                this.getNewCustomersCountInPeriod(currentMonth.start, currentMonth.end)
+            ]);
 
-            // Get last day of current month at 23:59:59
-            const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            const [completedJobsPreviousMonth, previousNewClients] = await Promise.all([
+                this.getCompletedJobsInPeriod(previousMonth.start, previousMonth.end),
+                this.getNewCustomersCountInPeriod(previousMonth.start, previousMonth.end)
+            ]);
 
-            // Get first day of previous month at 00:00:00
-            const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
-
-            // Get last day of previous month at 23:59:59
-            const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-
-            const completedJobsCurrentMonth = await this.repairJobRepository
-                .createQueryBuilder("repair_job")
-                .where("repair_job.status = :status", { status: RepairStatus.COMPLETED })
-                .andWhere("repair_job.completed_at >= :currentMonthStart", { currentMonthStart })
-                .andWhere("repair_job.completed_at <= :currentMonthEnd", { currentMonthEnd })
-                .select(["repair_job.total_cost"])
-                .getMany();
-
-            const currentTotalRevenue = completedJobsCurrentMonth.reduce((sum, job) =>
-                sum + Number(job.total_cost || 0), 0
-            );
-
+            const currentTotalRevenue = this.calculateRevenueFromJobs(completedJobsCurrentMonth);
+            const previousTotalRevenue = this.calculateRevenueFromJobs(completedJobsPreviousMonth);
             const currentJobsCompleted = completedJobsCurrentMonth.length;
-
-            const currentNewClients = await this.customerRepository
-                .createQueryBuilder("customer")
-                .where("customer.created_at >= :currentMonthStart", { currentMonthStart })
-                .andWhere("customer.created_at <= :currentMonthEnd", { currentMonthEnd })
-                .getCount();
-
-            const completedJobsPreviousMonth = await this.repairJobRepository
-                .createQueryBuilder("repair_job")
-                .where("repair_job.status = :status", { status: RepairStatus.COMPLETED })
-                .andWhere("repair_job.completed_at >= :previousMonthStart", { previousMonthStart })
-                .andWhere("repair_job.completed_at <= :previousMonthEnd", { previousMonthEnd })
-                .select(["repair_job.total_cost"])
-                .getMany();
-
-            const previousTotalRevenue = completedJobsPreviousMonth.reduce((sum, job) =>
-                sum + Number(job.total_cost || 0), 0
-            );
-
             const previousJobsCompleted = completedJobsPreviousMonth.length;
 
-            const previousNewClients = await this.customerRepository
-                .createQueryBuilder("customer")
-                .where("customer.created_at >= :previousMonthStart", { previousMonthStart })
-                .andWhere("customer.created_at <= :previousMonthEnd", { previousMonthEnd })
-                .getCount();
-
-            const calculatePercentageChange = (current: number, previous: number): number => {
-                if (previous === 0) {
-                    return current > 0 ? 100 : 0;
-                }
-                return Number((((current - previous) / previous) * 100).toFixed(2));
-            };
-
-            const revenueChange = calculatePercentageChange(currentTotalRevenue, previousTotalRevenue);
-            const clientsChange = calculatePercentageChange(currentNewClients, previousNewClients);
-            const jobsChange = calculatePercentageChange(currentJobsCompleted, previousJobsCompleted);
+            const revenueChange = this.calculatePercentageChange(currentTotalRevenue, previousTotalRevenue);
+            const clientsChange = this.calculatePercentageChange(currentNewClients, previousNewClients);
+            const jobsChange = this.calculatePercentageChange(currentJobsCompleted, previousJobsCompleted);
 
             return {
                 total_revenue: {
@@ -412,5 +418,5 @@ export class RepairJobService {
             }
             throw new InternalServerError("Error al obtener estadísticas");
         }
-    };
+    }
 }

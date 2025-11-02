@@ -1,17 +1,17 @@
 import { Repository } from "typeorm";
 import { Brand } from "../entities/Brand.entity";
-import { BadRequestError } from "../handler/error.handler";
+import { assertExists, assertTrue } from "../utils/validation.utils";
 import type { BrandType } from "../types";
 
 export class BrandService {
     constructor(private readonly brandRepository: Repository<Brand>) {}
 
     async create(data: Pick<BrandType, "name" | "logo_url">): Promise<string> {
-        const brand = await this.brandRepository.findOneBy({ name: data.name.trim().toLowerCase() });
+        const existingBrand = await this.brandRepository.findOneBy({
+            name: data.name.trim().toLowerCase()
+        });
 
-        if (brand) {
-            throw new BadRequestError("Una marca con ese nombre ya existe");
-        }
+        assertTrue(!existingBrand, "Una marca con ese nombre ya existe");
 
         const newBrand = this.brandRepository.create(data);
         await this.brandRepository.save(newBrand);
@@ -27,9 +27,7 @@ export class BrandService {
         const { id } = data;
         const brand = await this.brandRepository.findOneBy({ id });
 
-        if (!brand) {
-            throw new BadRequestError("Marca no encontrada");
-        }
+        assertExists(brand, "Marca");
 
         return brand;
     }
@@ -38,10 +36,7 @@ export class BrandService {
         const { id, name, logo_url, is_active } = data;
 
         const brand = await this.brandRepository.findOneBy({ id });
-
-        if (!brand) {
-            throw new BadRequestError("La marca no existe");
-        }
+        assertExists(brand, "Marca");
 
         brand.name = name;
         brand.logo_url = logo_url;
@@ -56,10 +51,7 @@ export class BrandService {
         const { id } = data;
 
         const brand = await this.brandRepository.findOneBy({ id });
-
-        if (!brand) {
-            throw new BadRequestError("La marca no existe");
-        }
+        assertExists(brand, "Marca");
 
         await this.brandRepository.remove(brand);
 
