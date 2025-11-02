@@ -1,4 +1,4 @@
-import { DataSource, Repository } from "typeorm";
+import { DataSource, EntityManager, Repository } from "typeorm";
 import { Customer } from "../entities/Customer.entity";
 import { Motorcycle } from "../entities/Motorcycle.entity";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
@@ -10,51 +10,67 @@ export class CustomerService {
         private readonly dataSource: DataSource
     ) {}
 
+    private async validateDuplicates(
+        manager: EntityManager,
+        data: CustomerWithMotorcycleType
+    ): Promise<void> {
+        const existingMotorcycle = await manager.findOne(Motorcycle, {
+            where: { plate: data.motorcycle_plate }
+        });
+
+        if (existingMotorcycle) {
+            throw new BadRequestError("Ya existe una motocicleta con esta placa");
+        }
+
+        if (data.customer_email) {
+            const existingCustomerByEmail = await manager.findOne(Customer, {
+                where: { email: data.customer_email }
+            });
+
+            if (existingCustomerByEmail) {
+                throw new BadRequestError("Ya existe un cliente con este correo electrónico");
+            }
+        }
+
+        const existingCustomerByPhone = await manager.findOne(Customer, {
+            where: { phone: data.customer_phone }
+        });
+
+        if (existingCustomerByPhone) {
+            throw new BadRequestError("Ya existe un cliente con este número de teléfono");
+        }
+    }
+
+    private buildCustomerData(data: CustomerWithMotorcycleType): CustomerType {
+        return {
+            name: data.customer_name,
+            phone: data.customer_phone,
+            email: data.customer_email
+        };
+    }
+
+    private buildMotorcycleData(
+        data: CustomerWithMotorcycleType,
+        customerId: string
+    ): MotorcycleType & { customer_id: string } {
+        return {
+            plate: data.motorcycle_plate,
+            brand_id: data.brand_id,
+            model_id: data.model_id,
+            customer_id: customerId
+        };
+    }
+
     async create(data: CustomerWithMotorcycleType): Promise<string> {
         return await this.dataSource.transaction(async manager => {
             try {
-                const existingMotorcycle = await manager.findOne(Motorcycle, {
-                    where: { plate: data.motorcycle_plate }
-                });
+                await this.validateDuplicates(manager, data);
 
-                if (existingMotorcycle) {
-                    throw new BadRequestError("Ya existe una motocicleta con esta placa");
-                }
-
-                if (data.customer_email) {
-                    const existingCustomerByEmail = await manager.findOne(Customer, {
-                        where: { email: data.customer_email }
-                    });
-
-                    if (existingCustomerByEmail) {
-                        throw new BadRequestError("Ya existe un cliente con este correo electrónico");
-                    }
-                }
-
-                const existingCustomerByPhone = await manager.findOne(Customer, {
-                    where: { phone: data.customer_phone }
-                });
-
-                if (existingCustomerByPhone) {
-                    throw new BadRequestError("Ya existe un cliente con este número de teléfono");
-                }
-
-                const customerData: CustomerType = {
-                    name: data.customer_name,
-                    phone: data.customer_phone,
-                    email: data.customer_email
-                };
-
+                const customerData = this.buildCustomerData(data);
                 const customer = manager.create(Customer, customerData);
                 const savedCustomer = await manager.save(Customer, customer);
 
-                const motorcycleData: MotorcycleType & { customer_id: string } = {
-                    plate: data.motorcycle_plate,
-                    brand_id: data.brand_id,
-                    model_id: data.model_id,
-                    customer_id: savedCustomer.id
-                };
-
+                const motorcycleData = this.buildMotorcycleData(data, savedCustomer.id);
                 const motorcycle = manager.create(Motorcycle, motorcycleData);
                 await manager.save(Motorcycle, motorcycle);
 
