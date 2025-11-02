@@ -27,3 +27,6 @@ coverage/
 # Misc
 *.bak
 *.tmp
+# Log files
+logs/
+*.log

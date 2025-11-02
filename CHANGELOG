@@ -3,6 +3,37 @@
 
 ## [1.0.0] 2025-11-2
 ### Added
+- **Structured Logging System with Winston**: Professional logging infrastructure for development and production
+  - Created `utils/logger.ts` with Winston configuration
+    - Environment-specific formats: colorized console for development, file logging for production
+    - Log levels: error, warn, info, debug (debug in dev, info in prod)
+    - Production file rotation with size and count limits (5MB max, 5 files)
+    - Separate error.log and combined.log files for production
+    - Stream export for Morgan HTTP logging integration
+    - Event handlers for connect, disconnect, and error events
+  - Integrated Winston with Morgan for HTTP request logging
+    - Changed Morgan format from "dev" to "combined" for production-ready logs
+    - Winston stream adapter for unified logging output
+  - Added logs/ directory to .gitignore for log file exclusion
+
+### Changed
+- **Server Startup Logging Enhanced**
+  - Replaced all console.log with structured logger calls in server.ts
+  - Removed colors package usage in favor of Winston colorization
+  - Database connection: logger.info() with proper success/error handling
+  - Seed status: logger.info() for running/completed, logger.warn() for skipped
+  - Error handling: logger.error() with error object metadata
+
+- **Error Middleware Logging Improved**
+  - Updated error.ts middleware to use Winston logger
+  - Conditional logging based on error severity:
+    - AppError with statusCode >= 500: logger.error() with stack trace
+    - AppError with statusCode < 500: logger.warn() without stack
+  - Unexpected errors: logger.error() with full error object
+  - Removed console.error in favor of structured logging
+
+## [1.0.0] 2025-11-2
+### Added
 - **Error Handling Utilities**: Created reusable utility functions for consistent error handling
   - Created `utils/asyncHandler.ts` with async error wrapper utilities
     - `catchAsync()`: Express middleware wrapper that automatically catches and forwards errors
