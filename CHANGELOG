@@ -2,7 +2,7 @@
 <!-- Latest on top -->
 
 ## [1.0.0] 2025-11-2
-### Added
+### Added - Infrastructure & Documentation
 - **Structured Logging System with Winston**: Professional logging infrastructure for development and production
   - Created `utils/logger.ts` with Winston configuration
     - Environment-specific formats: colorized console for development, file logging for production
@@ -16,13 +16,56 @@
     - Winston stream adapter for unified logging output
   - Added logs/ directory to .gitignore for log file exclusion
 
+- **Redis Configuration and Caching Infrastructure**
+  - Enhanced `config/redis.ts` with Winston logger integration
+  - Added event handlers: connect, disconnect, and error events
+  - Created `utils/cache.ts` with comprehensive caching utilities
+    - `CacheService` class with type-safe methods: get, set, del, exists, delPattern, flush
+    - `getOrSet()` method implementing cache-aside pattern
+    - `CacheKeys` object for consistent key naming conventions
+    - `CacheTTL` constants for different expiration times (SHORT, MEDIUM, LONG, DAY)
+    - Graceful error handling with automatic fallbacks
+
+- **Rate Limiting System with Redis Store**
+  - Installed `express-rate-limit` and `rate-limit-redis` packages
+  - Created `middleware/rateLimiter.ts` with factory functions for rate limiters
+    - `createGeneralLimiter()`: 100 requests per 15 minutes for all routes
+    - `createAuthLimiter()`: 5 requests per 15 minutes for login endpoint
+    - `createPasswordResetLimiter()`: 3 requests per hour for password reset
+  - Implemented Redis-backed rate limiting with persistent storage
+  - Added Spanish error messages for rate limit violations
+  - Integrated rate limiters into server initialization flow
+  - Applied specific rate limiters to auth routes (login, forgot-password, reset-password)
+  - Added logging for rate limit violations (IP tracking)
+
+- **Complete Swagger/OpenAPI Documentation**
+  - Installed `swagger-ui-express` and `swagger-jsdoc` packages
+  - Created `config/swagger.ts` with comprehensive OpenAPI 3.0 specification
+    - Environment-aware server URLs (development/production)
+    - Cookie-based authentication scheme definition
+    - Complete component schemas: Brand, Model, Service, Customer, RepairJob, PaginatedResponse, Error
+    - Reusable response components: UnauthorizedError, NotFoundError, BadRequestError, RateLimitError
+    - 6 API tags for organized documentation sections
+  - Added JSDoc annotations to ALL 42 endpoints across 6 route files:
+    - **Authentication routes** (7 endpoints): login, forgot-password, reset-password, logout, verify, profile
+    - **Brands routes** (5 endpoints): create, get all, get by ID, update, delete
+    - **Models routes** (5 endpoints): create, get by brand, get by ID, update, delete
+    - **Services routes** (5 endpoints): create, get all, get by ID, update, delete
+    - **Customers routes** (6 endpoints): create, search, get all, get by ID, update, delete
+    - **Repair Jobs routes** (9 endpoints): create, get all, statistics, get by ID, update, update status, cancel, workflow, delete
+  - Integrated Swagger UI at `/api-docs` endpoint with custom styling
+  - Added health check endpoint at `/health` for monitoring
+  - Complete request/response schemas with examples for all endpoints
+  - Parameter descriptions with types, formats, and validation rules
+
 ### Changed
 - **Server Startup Logging Enhanced**
-  - Replaced all console.log with structured logger calls in server.ts
-  - Removed colors package usage in favor of Winston colorization
+  - Replaced all console.log with structured logger calls in server.ts, index.ts, and config/env.ts
+  - Removed colors package dependency in favor of Winston colorization
   - Database connection: logger.info() with proper success/error handling
   - Seed status: logger.info() for running/completed, logger.warn() for skipped
   - Error handling: logger.error() with error object metadata
+  - Redis connection: logger.info() for successful connection
 
 - **Error Middleware Logging Improved**
   - Updated error.ts middleware to use Winston logger
@@ -31,6 +74,44 @@
     - AppError with statusCode < 500: logger.warn() without stack
   - Unexpected errors: logger.error() with full error object
   - Removed console.error in favor of structured logging
+
+- **Rate Limiter Architecture Refactored**
+  - Converted from static rate limiter instantiation to factory pattern
+  - Rate limiters now initialized after Redis connection (prevents ClientClosedError)
+  - Added `initializeRateLimiters()` function exported from server.ts
+  - Updated auth routes to accept optional rate limiter parameters
+  - Applied conditional middleware checks for graceful degradation
+
+- **Authentication Routes Enhanced**
+  - Updated `createAuthRoutes()` to accept optional authLimiter and passwordResetLimiter parameters
+  - Dynamically applies rate limiters only when available
+  - Maintains backward compatibility with optional parameters
+
+- **ESLint Configuration Updated**
+  - Modified `eslint.config.mts` to properly ignore dist/ and node_modules/ directories
+  - Separated ignores configuration into dedicated object for flat config format
+
+### Fixed
+- **Circular Dependency Resolution**
+  - Fixed circular import between `utils/logger.ts` and `config/env.ts`
+  - Changed logger to use `process.env.NODE_ENV` directly instead of importing from env module
+  - Prevents "Cannot read properties of undefined" errors on startup
+
+- **Redis Client Initialization Timing**
+  - Fixed ClientClosedError when rate limiters tried to use Redis before connection
+  - Implemented factory pattern for rate limiters with lazy initialization
+  - Rate limiters now created after Redis connects in main() function
+  - Proper initialization order: Environment → Redis → Rate Limiters → Database → Routes
+
+- **Type Safety Improvements**
+  - Resolved Redis client type conflicts by using `any` type with ESLint exemption
+  - Fixed "Variable used before being assigned" errors with proper optional types
+  - All rate limiter variables properly typed as `RateLimitRequestHandler | undefined`
+
+### Removed
+- **Deprecated Dependencies**
+  - Uninstalled `colors` package (replaced by Winston colorization)
+  - Removed all `colors` imports from codebase (server.ts, index.ts, config/env.ts)
 
 ## [1.0.0] 2025-11-2
 ### Added

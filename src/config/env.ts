@@ -1,5 +1,5 @@
 import "dotenv/config";
-import colors from "colors";
+import logger from "../utils/logger";
 
 interface EnvConfig {
     POSTGRES_DB: string;
@@ -92,23 +92,22 @@ export function validateEnv(): void {
     }
 
     if (missing.length > 0) {
-        console.error(colors.red.bold("\n❌ Missing required environment variables:"));
+        logger.error("Missing required environment variables:");
         missing.forEach(envVar => {
-            console.error(colors.red(`   - ${envVar}`));
+            logger.error(`   - ${envVar}`);
         });
-        console.error(colors.yellow("\nPlease create a .env file based on .env.example\n"));
+        logger.error("Please create a .env file based on .env.example");
         process.exit(1);
     }
 
     if (warnings.length > 0) {
-        console.warn(colors.yellow.bold("\n⚠️  Environment configuration warnings:"));
+        logger.warn("Environment configuration warnings:");
         warnings.forEach(warning => {
-            console.warn(colors.yellow(`   - ${warning}`));
+            logger.warn(`   - ${warning}`);
         });
-        console.warn("");
     }
 
-    console.log(colors.green.bold("Environment variables validated successfully"));
+    logger.info("Environment variables validated successfully");
 }
 
 export const env: EnvConfig = {
