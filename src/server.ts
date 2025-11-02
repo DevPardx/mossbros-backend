@@ -1,6 +1,5 @@
 import express from "express";
 import "dotenv/config";
-import colors from "colors";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -15,6 +14,7 @@ import { errorHandler } from "./middleware/error";
 import { runAllSeeds } from "./database/seeds";
 import { corsConfig } from "./config/cors";
 import { ServiceContainer } from "./services/ServiceContainer";
+import logger, { stream } from "./utils/logger";
 
 const app = express();
 
@@ -23,21 +23,21 @@ let serviceContainer: ServiceContainer;
 const connectDB = async () => {
   try {
     await AppDataSource.initialize();
-    console.log(colors.magenta.bold("Database connected successfully"));
+    logger.info("Database connected successfully");
 
     serviceContainer = new ServiceContainer(AppDataSource);
 
     if (process.env.NODE_ENV === "development") {
-      console.log(colors.cyan.bold("Running database seeds..."));
+      logger.info("Running database seeds...");
       await runAllSeeds();
-      console.log(colors.green.bold("Database seeding completed"));
+      logger.info("Database seeding completed");
     } else {
-      console.log(colors.yellow.bold("Skipping seeds in non-development environment"));
+      logger.warn("Skipping seeds in non-development environment");
     }
 
     setupRoutes();
   } catch (error) {
-    console.error(colors.red.bold("Error connecting to the database"), error);
+    logger.error("Error connecting to the database", error);
     process.exit(1);
   }
 };
@@ -53,7 +53,7 @@ const setupRoutes = () => {
 
 connectDB();
 
-app.use(morgan("dev"));
+app.use(morgan("combined", { stream }));
 
 app.use(express.json());
 
