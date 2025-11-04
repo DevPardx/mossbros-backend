@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
 import { Motorcycle } from "./Motorcycle.entity";
 
 @Entity("customers")
@@ -15,10 +15,10 @@ export class Customer {
   @Column({ type: "varchar", length: 100, nullable: true })
   email?: string;
 
-  @OneToOne(() => Motorcycle, (motorcycle) => motorcycle.customer, {
+  @OneToMany(() => Motorcycle, (motorcycle) => motorcycle.customer, {
     cascade: true
   })
-  motorcycle: Motorcycle;
+  motorcycles: Motorcycle[];
 
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   created_at: Date;

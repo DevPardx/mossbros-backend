@@ -45,13 +45,17 @@ export type MotorcycleType = {
     model_id: string;
 }
 
+export type MotorcycleInputType = {
+    motorcycle_plate: string;
+    brand_id: string;
+    model_id: string;
+}
+
 export type CustomerWithMotorcycleType = {
     customer_name: string;
     customer_phone: string;
     customer_email?: string;
-    motorcycle_plate: string;
-    brand_id: string;
-    model_id: string;
+    motorcycles: MotorcycleInputType[];
 }
 
 export type ServiceType = {

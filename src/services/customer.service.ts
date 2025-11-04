@@ -1,8 +1,8 @@
-import { DataSource, EntityManager, Repository } from "typeorm";
+import { DataSource, EntityManager, Repository, In } from "typeorm";
 import { Customer } from "../entities/Customer.entity";
 import { Motorcycle } from "../entities/Motorcycle.entity";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
-import type { CustomerWithMotorcycleType, CustomerType, MotorcycleType } from "../types";
+import type { CustomerWithMotorcycleType, CustomerType, MotorcycleType, MotorcycleInputType } from "../types";
 
 export class CustomerService {
     constructor(
@@ -12,32 +12,51 @@ export class CustomerService {
 
     private async validateDuplicates(
         manager: EntityManager,
-        data: CustomerWithMotorcycleType
+        data: CustomerWithMotorcycleType,
+        excludeCustomerId?: string
     ): Promise<void> {
-        const existingMotorcycle = await manager.findOne(Motorcycle, {
-            where: { plate: data.motorcycle_plate }
-        });
-
-        if (existingMotorcycle) {
-            throw new BadRequestError("Ya existe una motocicleta con esta placa");
+        // Check for duplicate plates in the submitted motorcycles
+        const plates = data.motorcycles.map(m => m.motorcycle_plate);
+        const uniquePlates = new Set(plates);
+        if (plates.length !== uniquePlates.size) {
+            throw new BadRequestError("No puedes registrar el mismo número de placa múltiples veces");
         }
 
+        // Check for existing motorcycles with these plates
+        const existingMotorcycles = await manager.find(Motorcycle, {
+            where: { plate: In(plates) }
+        });
+
+        // Filter out motorcycles that belong to the customer being updated
+        const duplicateMotorcycles = excludeCustomerId
+            ? existingMotorcycles.filter(m => m.customer_id !== excludeCustomerId)
+            : existingMotorcycles;
+
+        if (duplicateMotorcycles.length > 0) {
+            const duplicatePlate = duplicateMotorcycles[0]?.plate ?? "desconocida";
+            throw new BadRequestError(`Ya existe una motocicleta con la placa ${duplicatePlate}`);
+        }
+
+        // Check for duplicate email
         if (data.customer_email) {
             const existingCustomerByEmail = await manager.findOne(Customer, {
                 where: { email: data.customer_email }
             });
 
-            if (existingCustomerByEmail) {
+            if (existingCustomerByEmail && existingCustomerByEmail.id !== excludeCustomerId) {
                 throw new BadRequestError("Ya existe un cliente con este correo electrónico");
             }
         }
 
-        const existingCustomerByPhone = await manager.findOne(Customer, {
-            where: { phone: data.customer_phone }
-        });
+        // Check for duplicate phone
+        if (data.customer_phone) {
+            const existingCustomerByPhone = await manager.findOne(Customer, {
+                where: { phone: data.customer_phone }
+            });
 
-        if (existingCustomerByPhone) {
-            throw new BadRequestError("Ya existe un cliente con este número de teléfono");
+            if (existingCustomerByPhone && existingCustomerByPhone.id !== excludeCustomerId) {
+                throw new BadRequestError("Ya existe un cliente con este número de teléfono");
+            }
         }
     }
 
@@ -50,13 +69,13 @@ export class CustomerService {
     }
 
     private buildMotorcycleData(
-        data: CustomerWithMotorcycleType,
+        motorcycleInput: MotorcycleInputType,
         customerId: string
     ): MotorcycleType & { customer_id: string } {
         return {
-            plate: data.motorcycle_plate,
-            brand_id: data.brand_id,
-            model_id: data.model_id,
+            plate: motorcycleInput.motorcycle_plate,
+            brand_id: motorcycleInput.brand_id,
+            model_id: motorcycleInput.model_id,
             customer_id: customerId
         };
     }
@@ -64,17 +83,28 @@ export class CustomerService {
     async create(data: CustomerWithMotorcycleType): Promise<string> {
         return await this.dataSource.transaction(async manager => {
             try {
+                // Validate at least one motorcycle is provided
+                if (!data.motorcycles || data.motorcycles.length === 0) {
+                    throw new BadRequestError("Debes registrar al menos una motocicleta");
+                }
+
                 await this.validateDuplicates(manager, data);
 
+                // Create customer
                 const customerData = this.buildCustomerData(data);
                 const customer = manager.create(Customer, customerData);
                 const savedCustomer = await manager.save(Customer, customer);
 
-                const motorcycleData = this.buildMotorcycleData(data, savedCustomer.id);
-                const motorcycle = manager.create(Motorcycle, motorcycleData);
-                await manager.save(Motorcycle, motorcycle);
+                // Create all motorcycles
+                const motorcycles = data.motorcycles.map(motorcycleInput => {
+                    const motorcycleData = this.buildMotorcycleData(motorcycleInput, savedCustomer.id);
+                    return manager.create(Motorcycle, motorcycleData);
+                });
 
-                return "El cliente ha sido registrado";
+                await manager.save(Motorcycle, motorcycles);
+
+                const motorcycleCount = motorcycles.length;
+                return `El cliente ha sido registrado con ${motorcycleCount} motocicleta${motorcycleCount > 1 ? "s" : ""}`;
             } catch (error) {
                 if (error instanceof AppError) {
                     throw error;
@@ -89,7 +119,7 @@ export class CustomerService {
             const skip = (page - 1) * limit;
 
             const [customers, total] = await this.customerRepository.findAndCount({
-                relations: ["motorcycle", "motorcycle.brand", "motorcycle.model"],
+                relations: ["motorcycles", "motorcycles.brand", "motorcycles.model"],
                 order: { created_at: "DESC" },
                 take: limit,
                 skip: skip
@@ -119,7 +149,7 @@ export class CustomerService {
 
             const queryBuilder = this.customerRepository
                 .createQueryBuilder("customer")
-                .leftJoinAndSelect("customer.motorcycle", "motorcycle")
+                .leftJoinAndSelect("customer.motorcycles", "motorcycle")
                 .leftJoinAndSelect("motorcycle.brand", "brand")
                 .leftJoinAndSelect("motorcycle.model", "model")
                 .where("LOWER(customer.name) LIKE :searchTerm", { searchTerm })
@@ -147,7 +177,7 @@ export class CustomerService {
         try {
             const customer = await this.customerRepository.findOne({
                 where: { id },
-                relations: ["motorcycle", "motorcycle.brand", "motorcycle.model"]
+                relations: ["motorcycles", "motorcycles.brand", "motorcycles.model"]
             });
 
             if (!customer) {
@@ -168,40 +198,66 @@ export class CustomerService {
             try {
                 const customer = await manager.findOne(Customer, {
                     where: { id },
-                    relations: ["motorcycle"]
+                    relations: ["motorcycles"]
                 });
 
                 if (!customer) {
-                    throw new NotFoundError("Customer not found");
+                    throw new NotFoundError("Cliente no encontrado");
                 }
 
-                const customerUpdateData: Partial<CustomerType> = {};
-                const motorcycleUpdateData: Partial<MotorcycleType> = {};
+                // Prepare validation data - only include fields that are actually changing
+                const validationData: Partial<CustomerWithMotorcycleType> = {};
 
+                // Only validate phone if it's changing
+                if (data.customer_phone !== undefined && data.customer_phone !== customer.phone) {
+                    validationData.customer_phone = data.customer_phone;
+                }
+
+                // Only validate email if it's changing
+                if (data.customer_email !== undefined && data.customer_email !== customer.email) {
+                    validationData.customer_email = data.customer_email;
+                }
+
+                // Always include motorcycles if provided
+                if (data.motorcycles !== undefined) {
+                    if (data.motorcycles.length === 0) {
+                        throw new BadRequestError("Debes registrar al menos una motocicleta");
+                    }
+                    validationData.motorcycles = data.motorcycles;
+                }
+
+                // Validate duplicates only if there's something to validate
+                if (validationData.motorcycles || validationData.customer_phone || validationData.customer_email) {
+                    await this.validateDuplicates(
+                        manager,
+                        { ...validationData, motorcycles: validationData.motorcycles || [] } as CustomerWithMotorcycleType,
+                        id
+                    );
+                }
+
+                // If motorcycles array is provided, replace all motorcycles
+                if (data.motorcycles !== undefined) {
+                    // Remove all existing motorcycles for this customer
+                    await manager.delete(Motorcycle, { customer_id: id });
+
+                    // Create new motorcycles
+                    const motorcycles = data.motorcycles.map(motorcycleInput => {
+                        const motorcycleData = this.buildMotorcycleData(motorcycleInput, id);
+                        return manager.create(Motorcycle, motorcycleData);
+                    });
+
+                    await manager.save(Motorcycle, motorcycles);
+                }
+
+                // Update customer data if provided
+                const customerUpdateData: Partial<CustomerType> = {};
                 if (data.customer_name !== undefined) customerUpdateData.name = data.customer_name;
                 if (data.customer_phone !== undefined) customerUpdateData.phone = data.customer_phone;
                 if (data.customer_email !== undefined) customerUpdateData.email = data.customer_email;
 
-                if (data.motorcycle_plate !== undefined) motorcycleUpdateData.plate = data.motorcycle_plate;
-                if (data.brand_id !== undefined) motorcycleUpdateData.brand_id = data.brand_id;
-                if (data.model_id !== undefined) motorcycleUpdateData.model_id = data.model_id;
-
+                // Update customer if there are changes
                 if (Object.keys(customerUpdateData).length > 0) {
                     await manager.update(Customer, { id }, customerUpdateData);
-                }
-
-                if (Object.keys(motorcycleUpdateData).length > 0 && customer.motorcycle) {
-                    if (motorcycleUpdateData.plate && motorcycleUpdateData.plate !== customer.motorcycle.plate) {
-                        const existingMotorcycle = await manager.findOne(Motorcycle, {
-                            where: { plate: motorcycleUpdateData.plate }
-                        });
-
-                        if (existingMotorcycle) {
-                            throw new BadRequestError("A motorcycle with this plate already exists");
-                        }
-                    }
-
-                    await manager.update(Motorcycle, { id: customer.motorcycle.id }, motorcycleUpdateData);
                 }
 
                 return "Cliente actualizado correctamente";
@@ -210,7 +266,7 @@ export class CustomerService {
                     throw error;
                 }
                 console.error("Error updating customer:", error);
-                throw new InternalServerError("Error updating customer");
+                throw new InternalServerError("Error al actualizar cliente");
             }
         });
     }
