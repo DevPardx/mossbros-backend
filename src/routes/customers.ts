@@ -77,10 +77,11 @@ router.post("/",
     body("customer_phone").notEmpty().withMessage("Phone number is required")
         .isLength({ min: 14, max: 14 }).withMessage("Invalid phone number"),
     body("customer_email").optional().isEmail().withMessage("Email must be valid"),
-    body("motorcycle_plate").notEmpty().withMessage("Motorcycle plate is required")
+    body("motorcycles").isArray({ min: 1 }).withMessage("At least one motorcycle is required"),
+    body("motorcycles.*.motorcycle_plate").notEmpty().withMessage("Motorcycle plate is required")
         .isLength({ min: 6, max: 10 }).withMessage("Plate must be between 6 and 10 characters"),
-    body("brand_id").isUUID().withMessage("Brand ID must be valid"),
-    body("model_id").isUUID().withMessage("Model ID must be valid"),
+    body("motorcycles.*.brand_id").isUUID().withMessage("Brand ID must be valid"),
+    body("motorcycles.*.model_id").isUUID().withMessage("Model ID must be valid"),
     handleInputErrors,
     customerController.create
 );
@@ -272,10 +273,12 @@ router.post("/",
         body("customer_name").notEmpty().withMessage("Customer name is required")
             .isString().withMessage("Customer name not valid"),
         body("customer_phone").isLength({ min: 14, max: 14 }).withMessage("Invalid phone number"),
-        body("customer_email").isEmail().withMessage("Email must be valid"),
-        body("motorcycle_plate").isLength({ min: 6, max: 10 }).withMessage("Plate must be between 6 and 10 characters"),
-        body("brand_id").isUUID().withMessage("Brand ID must be valid"),
-        body("model_id").isUUID().withMessage("Model ID must be valid"),
+        body("customer_email").optional().isEmail().withMessage("Email must be valid"),
+        body("motorcycles").isArray({ min: 1 }).withMessage("At least one motorcycle is required"),
+        body("motorcycles.*.motorcycle_plate").notEmpty().withMessage("Motorcycle plate is required")
+            .isLength({ min: 6, max: 10 }).withMessage("Plate must be between 6 and 10 characters"),
+        body("motorcycles.*.brand_id").isUUID().withMessage("Brand ID must be valid"),
+        body("motorcycles.*.model_id").isUUID().withMessage("Model ID must be valid"),
         handleInputErrors,
         customerController.update
     );

@@ -1,6 +1,87 @@
 # CHANGELOG
 <!-- Latest on top -->
 
+## [1.0.0] 2025-11-03
+### Added - Multiple Motorcycles Per Customer
+- **One-to-Many Customer-Motorcycle Relationship**: Complete refactoring from one-to-one to one-to-many pattern
+  - Customers can now own unlimited motorcycles instead of just one
+  - Motorcycle entities maintain foreign key relationship to customer
+  - Automatic cascade deletion when customer is removed
+  - Full support for multiple motorcycle operations (create, read, update, delete)
+
+- **Enhanced Validation System**
+  - Array validation for motorcycles using express-validator wildcards (`motorcycles.*.field_name`)
+  - Minimum 1 motorcycle requirement for customer creation and updates
+  - Duplicate plate detection across all submitted motorcycles in single request
+  - Smart exclusion of customer's own motorcycles from duplicate checks during updates
+  - Validation only runs for fields that are actually changing (phone/email)
+
+- **Transaction-Based Motorcycle Management**
+  - Atomic replacement of all customer motorcycles during updates
+  - Delete old motorcycles and insert new ones in single transaction
+  - Rollback protection if any motorcycle creation fails
+  - Database consistency guaranteed through transaction boundaries
+
+### Changed
+- **Database Schema Migration**
+  - `Customer` entity: Changed `@OneToOne` to `@OneToMany` for motorcycles relationship
+  - `Customer` entity: Renamed `motorcycle` field to `motorcycles` (array)
+  - `Motorcycle` entity: Changed `@OneToOne` to `@ManyToOne` for customer relationship
+  - No migration required - TypeORM handles relationship changes automatically
+
+- **Type Definitions Enhanced** (`src/types/index.ts`)
+  - Added `MotorcycleInputType` for form submissions with individual motorcycle data
+  - Updated `CustomerWithMotorcycleType` from single motorcycle to `motorcycles: MotorcycleInputType[]`
+  - Maintained backward compatibility with existing response types
+
+- **Customer Service Refactored** (`src/services/customer.service.ts`)
+  - `create()`: Now handles multiple motorcycles in single transaction
+    - Validates at least 1 motorcycle is provided
+    - Creates all motorcycles atomically with customer
+    - Success message shows motorcycle count (e.g., "con 3 motocicletas")
+  - `update()`: Replaces all motorcycles using delete-then-insert pattern
+    - Smart validation only for changed fields (phone, email)
+    - Compares new values with existing customer data
+    - Prevents false duplicate errors when keeping same data
+  - `validateDuplicates()`: Enhanced with smart filtering
+    - Checks for duplicate plates within same request
+    - Filters out current customer's motorcycles during updates
+    - Only validates phone/email if values are actually changing
+    - Accepts optional `excludeCustomerId` parameter for update operations
+  - `getAll()`, `search()`, `getById()`: Load `motorcycles` array with full relations
+    - Eager loading of brand and model for each motorcycle
+    - Maintains ordering by creation date
+  - Helper methods updated:
+    - `buildMotorcycleData()`: Now accepts individual motorcycle input
+    - `validateDuplicates()`: Added smart change detection logic
+
+- **Route Validators Updated** (`src/routes/customers.ts`)
+  - POST `/customers`: Changed from single motorcycle to array validation
+    - `body("motorcycles").isArray({ min: 1 })` ensures at least one motorcycle
+    - `body("motorcycles.*.motorcycle_plate")` validates each plate in array
+    - `body("motorcycles.*.brand_id")` validates each brand UUID
+    - `body("motorcycles.*.model_id")` validates each model UUID
+  - PUT `/customers/:id`: Same array validation as POST route
+    - Supports updating customer with new motorcycle list
+    - Email validation changed to `.optional()` for consistency
+
+### Fixed
+- **False Duplicate Validation Errors**
+  - No longer throws "motorcycle plate already exists" when updating customer with same motorcycles
+  - No longer throws "phone already exists" when updating customer without changing phone
+  - No longer throws "email already exists" when updating customer without changing email
+  - Proper filtering excludes current customer's data from duplicate checks
+
+- **Type Safety Improvements**
+  - Fixed `existingMotorcycles[0]?.plate` with nullish coalescing operator
+  - Added proper type guards for array access
+  - All TypeScript compilation errors resolved
+
+- **Validation Logic**
+  - Phone validation now wrapped in conditional check (only validates if provided)
+  - Email validation only runs when value is different from current
+  - Motorcycle validation excludes customer's own motorcycles by customer_id
+
 ## [1.0.0] 2025-11-2
 ### Added - Infrastructure & Documentation
 - **Structured Logging System with Winston**: Professional logging infrastructure for development and production
