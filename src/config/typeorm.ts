@@ -22,12 +22,14 @@ export const AppDataSource = new DataSource({
     migrationsRun: isProduction,
     migrationsTableName: "migrations_history",
 
-    ...(isProduction && {
-        extra: {
+    extra: {
+        ...(isProduction && {
             max: 20,
             min: 5,
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 2000,
-        }
-    })
+        }),
+        // Set timezone to UTC for consistent timestamp handling
+        timezone: "UTC"
+    }
 });

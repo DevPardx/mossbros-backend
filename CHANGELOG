@@ -1,6 +1,22 @@
 # CHANGELOG
 <!-- Latest on top -->
 
+## [1.0.0] 2025-11-07
+### Fixed
+- **RepairJob Date Handling** (`src/services/repairJob.service.ts`)
+  - Fixed timezone issues in `update()` method
+  - Changed from converting date string to Date object to passing string directly
+  - Allows entity transformer to handle date conversion properly
+  - Prevents timezone offset bugs when storing date-only values
+  - Ensures YYYY-MM-DD format is preserved throughout the update flow
+  - More consistent with the create flow's date handling
+
+### Changed
+- **RepairJob Service** (`src/services/repairJob.service.ts`)
+  - Updated `update()` method to pass `estimated_completion` as string
+  - Removed manual `new Date()` conversion that caused timezone issues
+  - Entity transformer now handles all date conversions consistently
+
 ## [1.0.0] 2025-11-03
 ### Added - Multiple Motorcycles Per Customer
 - **One-to-Many Customer-Motorcycle Relationship**: Complete refactoring from one-to-one to one-to-many pattern
