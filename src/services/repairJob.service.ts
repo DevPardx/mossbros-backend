@@ -51,7 +51,6 @@ export class RepairJobService {
             .getMany();
     }
 
-    // Helper method: Get new customer count in a time period
     private async getNewCustomersCountInPeriod(start: Date, end: Date): Promise<number> {
         return await this.customerRepository
             .createQueryBuilder("customer")
@@ -84,7 +83,6 @@ export class RepairJobService {
 
         const estimatedDate = new Date();
         estimatedDate.setDate(estimatedDate.getDate() + (baseDays * complexityFactor));
-        // Set time to midnight since we only store dates
         estimatedDate.setHours(0, 0, 0, 0);
         return estimatedDate;
     }
@@ -232,8 +230,6 @@ export class RepairJobService {
             if (data.notes !== undefined) repairJob.notes = data.notes;
             if (data.estimated_completion) {
                 console.log("Received estimated_completion:", data.estimated_completion);
-                // Don't convert to Date - let the entity transformer handle it
-                // This avoids timezone issues when storing date-only values
                 repairJob.estimated_completion = data.estimated_completion as Date | string;
                 console.log("Set estimated_completion as string:", repairJob.estimated_completion);
             }

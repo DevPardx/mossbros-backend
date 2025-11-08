@@ -29,7 +29,6 @@ export const AppDataSource = new DataSource({
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 2000,
         }),
-        // Set timezone to UTC for consistent timestamp handling
         timezone: "UTC"
     }
 });

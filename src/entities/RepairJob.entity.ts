@@ -24,7 +24,6 @@ export class RepairJob {
     transformer: {
       to: (value: Date | string | undefined) => {
         if (!value) return value;
-        // Convert Date to YYYY-MM-DD string for storage
         if (value instanceof Date) {
           const year = value.getFullYear();
           const month = String(value.getMonth() + 1).padStart(2, "0");
@@ -35,7 +34,6 @@ export class RepairJob {
       },
       from: (value: string | Date | undefined | null) => {
         if (!value) return value;
-        // Always return just the date string (YYYY-MM-DD)
         const dateStr = typeof value === "string" ? value : value.toString();
         const result = dateStr.split("T")[0];
         console.log("Transformer from:", value, "→", result);

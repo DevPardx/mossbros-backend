@@ -1,15 +1,7 @@
 import { client } from "../config/redis";
 import logger from "./logger";
 
-/**
- * Cache utility for Redis operations with type safety and error handling
- */
 export class CacheService {
-    /**
-     * Get a value from cache
-     * @param key - Cache key
-     * @returns Parsed value or null if not found
-     */
     static async get<T>(key: string): Promise<T | null> {
         try {
             const value = await client.get(key);
@@ -22,12 +14,6 @@ export class CacheService {
         }
     }
 
-    /**
-     * Set a value in cache with optional TTL
-     * @param key - Cache key
-     * @param value - Value to cache
-     * @param ttl - Time to live in seconds (optional)
-     */
     static async set<T>(key: string, value: T, ttl?: number): Promise<void> {
         try {
             const serialized = JSON.stringify(value);
@@ -44,10 +30,6 @@ export class CacheService {
         }
     }
 
-    /**
-     * Delete a value from cache
-     * @param key - Cache key
-     */
     static async del(key: string): Promise<void> {
         try {
             await client.del(key);
@@ -57,10 +39,6 @@ export class CacheService {
         }
     }
 
-    /**
-     * Delete all keys matching a pattern
-     * @param pattern - Key pattern (e.g., "brands:*")
-     */
     static async delPattern(pattern: string): Promise<void> {
         try {
             const keys = await client.keys(pattern);
@@ -73,11 +51,6 @@ export class CacheService {
         }
     }
 
-    /**
-     * Check if a key exists in cache
-     * @param key - Cache key
-     * @returns True if key exists
-     */
     static async exists(key: string): Promise<boolean> {
         try {
             const result = await client.exists(key);
@@ -88,44 +61,30 @@ export class CacheService {
         }
     }
 
-    /**
-     * Get or set a value in cache (cache-aside pattern)
-     * @param key - Cache key
-     * @param fetchFn - Function to fetch value if not in cache
-     * @param ttl - Time to live in seconds (optional)
-     * @returns Cached or fetched value
-     */
     static async getOrSet<T>(
         key: string,
         fetchFn: () => Promise<T>,
         ttl?: number
     ): Promise<T> {
         try {
-            // Try to get from cache
             const cached = await this.get<T>(key);
             if (cached !== null) {
                 logger.debug(`Cache hit for key ${key}`);
                 return cached;
             }
 
-            // Cache miss - fetch value
             logger.debug(`Cache miss for key ${key}`);
             const value = await fetchFn();
 
-            // Store in cache
             await this.set(key, value, ttl);
 
             return value;
         } catch (error) {
             logger.error(`Cache getOrSet error for key ${key}:`, error);
-            // Fallback to fetching directly
             return await fetchFn();
         }
     }
 
-    /**
-     * Clear all cache
-     */
     static async flush(): Promise<void> {
         try {
             await client.flushDb();
@@ -136,9 +95,6 @@ export class CacheService {
     }
 }
 
-/**
- * Cache key builders for consistency
- */
 export const CacheKeys = {
     brand: (id: string) => `brand:${id}`,
     brands: () => "brands:all",
@@ -151,9 +107,6 @@ export const CacheKeys = {
     statistics: () => "statistics:dashboard",
 } as const;
 
-/**
- * Cache TTL constants (in seconds)
- */
 export const CacheTTL = {
     SHORT: 60,           // 1 minute
     MEDIUM: 300,         // 5 minutes

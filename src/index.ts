@@ -11,7 +11,6 @@ const main = async () => {
   try {
     await client.connect();
 
-    // Initialize rate limiters after Redis connects
     initializeRateLimiters(client);
 
     server.listen(PORT, () => {

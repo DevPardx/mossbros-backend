@@ -15,19 +15,16 @@ export class CustomerService {
         data: CustomerWithMotorcycleType,
         excludeCustomerId?: string
     ): Promise<void> {
-        // Check for duplicate plates in the submitted motorcycles
         const plates = data.motorcycles.map(m => m.motorcycle_plate);
         const uniquePlates = new Set(plates);
         if (plates.length !== uniquePlates.size) {
             throw new BadRequestError("No puedes registrar el mismo número de placa múltiples veces");
         }
 
-        // Check for existing motorcycles with these plates
         const existingMotorcycles = await manager.find(Motorcycle, {
             where: { plate: In(plates) }
         });
 
-        // Filter out motorcycles that belong to the customer being updated
         const duplicateMotorcycles = excludeCustomerId
             ? existingMotorcycles.filter(m => m.customer_id !== excludeCustomerId)
             : existingMotorcycles;
@@ -37,7 +34,6 @@ export class CustomerService {
             throw new BadRequestError(`Ya existe una motocicleta con la placa ${duplicatePlate}`);
         }
 
-        // Check for duplicate email
         if (data.customer_email) {
             const existingCustomerByEmail = await manager.findOne(Customer, {
                 where: { email: data.customer_email }
@@ -48,7 +44,6 @@ export class CustomerService {
             }
         }
 
-        // Check for duplicate phone
         if (data.customer_phone) {
             const existingCustomerByPhone = await manager.findOne(Customer, {
                 where: { phone: data.customer_phone }
@@ -83,19 +78,16 @@ export class CustomerService {
     async create(data: CustomerWithMotorcycleType): Promise<string> {
         return await this.dataSource.transaction(async manager => {
             try {
-                // Validate at least one motorcycle is provided
                 if (!data.motorcycles || data.motorcycles.length === 0) {
                     throw new BadRequestError("Debes registrar al menos una motocicleta");
                 }
 
                 await this.validateDuplicates(manager, data);
 
-                // Create customer
                 const customerData = this.buildCustomerData(data);
                 const customer = manager.create(Customer, customerData);
                 const savedCustomer = await manager.save(Customer, customer);
 
-                // Create all motorcycles
                 const motorcycles = data.motorcycles.map(motorcycleInput => {
                     const motorcycleData = this.buildMotorcycleData(motorcycleInput, savedCustomer.id);
                     return manager.create(Motorcycle, motorcycleData);
@@ -205,20 +197,16 @@ export class CustomerService {
                     throw new NotFoundError("Cliente no encontrado");
                 }
 
-                // Prepare validation data - only include fields that are actually changing
                 const validationData: Partial<CustomerWithMotorcycleType> = {};
 
-                // Only validate phone if it's changing
                 if (data.customer_phone !== undefined && data.customer_phone !== customer.phone) {
                     validationData.customer_phone = data.customer_phone;
                 }
 
-                // Only validate email if it's changing
                 if (data.customer_email !== undefined && data.customer_email !== customer.email) {
                     validationData.customer_email = data.customer_email;
                 }
 
-                // Always include motorcycles if provided
                 if (data.motorcycles !== undefined) {
                     if (data.motorcycles.length === 0) {
                         throw new BadRequestError("Debes registrar al menos una motocicleta");
@@ -226,7 +214,6 @@ export class CustomerService {
                     validationData.motorcycles = data.motorcycles;
                 }
 
-                // Validate duplicates only if there's something to validate
                 if (validationData.motorcycles || validationData.customer_phone || validationData.customer_email) {
                     await this.validateDuplicates(
                         manager,
@@ -235,12 +222,9 @@ export class CustomerService {
                     );
                 }
 
-                // If motorcycles array is provided, replace all motorcycles
                 if (data.motorcycles !== undefined) {
-                    // Remove all existing motorcycles for this customer
                     await manager.delete(Motorcycle, { customer_id: id });
 
-                    // Create new motorcycles
                     const motorcycles = data.motorcycles.map(motorcycleInput => {
                         const motorcycleData = this.buildMotorcycleData(motorcycleInput, id);
                         return manager.create(Motorcycle, motorcycleData);
@@ -249,13 +233,11 @@ export class CustomerService {
                     await manager.save(Motorcycle, motorcycles);
                 }
 
-                // Update customer data if provided
                 const customerUpdateData: Partial<CustomerType> = {};
                 if (data.customer_name !== undefined) customerUpdateData.name = data.customer_name;
                 if (data.customer_phone !== undefined) customerUpdateData.phone = data.customer_phone;
                 if (data.customer_email !== undefined) customerUpdateData.email = data.customer_email;
 
-                // Update customer if there are changes
                 if (Object.keys(customerUpdateData).length > 0) {
                     await manager.update(Customer, { id }, customerUpdateData);
                 }

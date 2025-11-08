@@ -87,7 +87,6 @@ app.use(cookieParser());
 
 app.use(cors(corsConfig));
 
-// Apply general rate limiter if initialized
 if (generalLimiter) {
   app.use(generalLimiter);
 }
