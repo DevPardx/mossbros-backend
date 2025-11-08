@@ -84,6 +84,8 @@ export class RepairJobService {
 
         const estimatedDate = new Date();
         estimatedDate.setDate(estimatedDate.getDate() + (baseDays * complexityFactor));
+        // Set time to midnight since we only store dates
+        estimatedDate.setHours(0, 0, 0, 0);
         return estimatedDate;
     }
 
@@ -171,6 +173,8 @@ export class RepairJobService {
             const query = this.repairJobRepository.createQueryBuilder("repair_job")
                 .leftJoinAndSelect("repair_job.motorcycle", "motorcycle")
                 .leftJoinAndSelect("motorcycle.customer", "customer")
+                .leftJoinAndSelect("motorcycle.brand", "brand")
+                .leftJoinAndSelect("motorcycle.model", "model")
                 .leftJoinAndSelect("repair_job.services", "services")
                 .orderBy("repair_job.created_at", "DESC");
 
@@ -197,7 +201,7 @@ export class RepairJobService {
         try {
             const repairJob = await this.repairJobRepository.findOne({
                 where: { id },
-                relations: ["motorcycle", "motorcycle.customer", "services"]
+                relations: ["motorcycle", "motorcycle.customer", "motorcycle.brand", "motorcycle.model", "services"]
             });
 
             if (!repairJob) {
@@ -227,10 +231,15 @@ export class RepairJobService {
 
             if (data.notes !== undefined) repairJob.notes = data.notes;
             if (data.estimated_completion) {
-                repairJob.estimated_completion = new Date(data.estimated_completion);
+                console.log("Received estimated_completion:", data.estimated_completion);
+                // Don't convert to Date - let the entity transformer handle it
+                // This avoids timezone issues when storing date-only values
+                repairJob.estimated_completion = data.estimated_completion as Date | string;
+                console.log("Set estimated_completion as string:", repairJob.estimated_completion);
             }
 
-            await this.repairJobRepository.save(repairJob);
+            const saved = await this.repairJobRepository.save(repairJob);
+            console.log("Saved repair job estimated_completion:", saved.estimated_completion);
 
             return "Trabajo de reparación actualizado exitosamente";
 
