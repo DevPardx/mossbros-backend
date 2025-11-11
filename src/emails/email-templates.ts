@@ -77,17 +77,7 @@ export class EmailTemplates {
                                                                     </p>
                                                                     
                                                                     <p style="font-size:14px;line-height:1.5;margin-top:16px;margin-bottom:16px;color:#ffffff">
-                                                                        Para restablecer tu contraseña, usa el siguiente código de verificación:
-                                                                    </p>
-                                                                    
-                                                                    <div style="background-color:#404040;border:2px solid #e5e7eb;border-radius:8px;padding:20px;text-align:center;margin:20px 0">
-                                                                        <h2 style="font-size:32px;font-weight:bold;letter-spacing:4px;margin:0;color:#ffffff;font-family:monospace">
-                                                                            ${data.token}
-                                                                        </h2>
-                                                                    </div>
-                                                                    
-                                                                    <p style="font-size:14px;line-height:1.5;margin-top:16px;margin-bottom:16px;color:#ffffff">
-                                                                        También puedes hacer clic en el siguiente enlace para restablecer tu contraseña directamente:
+                                                                        Para reestablecer tu contraseña haz click en el siguiente enlace:
                                                                     </p>
                                                                     
                                                                     <div style="text-align:center;margin:24px 0">

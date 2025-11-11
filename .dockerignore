@@ -1,0 +1,48 @@
+# Dependencies
+node_modules
+npm-debug.log
+package-lock.json
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist
+build
+
+# Logs
+logs
+*.log
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.github
+
+# Documentation
+README.md
+CHANGELOG
+LICENSE
+
+# Test files
+*.test.ts
+*.spec.ts
+coverage
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
