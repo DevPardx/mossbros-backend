@@ -1,9 +1,11 @@
 import { validateEnv, env } from "./config/env";
+import { initializeSentry } from "./config/sentry";
 import server, { initializeRateLimiters } from "./server";
 import { client } from "./config/redis";
 import logger from "./utils/logger";
 
 validateEnv();
+initializeSentry();
 
 const PORT = env.PORT || 4000;
 

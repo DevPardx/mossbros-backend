@@ -3,6 +3,8 @@ import "dotenv/config";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import compression from "compression";
 import { createAuthRoutes } from "./routes/auth";
 import { createBrandRoutes } from "./routes/brands";
 import { createModelRoutes } from "./routes/models";
@@ -78,6 +80,10 @@ const setupRoutes = () => {
 
   logger.info("API documentation available at /api-docs");
 };
+
+app.use(helmet());
+
+app.use(compression());
 
 app.use(morgan("combined", { stream }));
 
