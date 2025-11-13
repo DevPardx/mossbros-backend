@@ -2,6 +2,10 @@
 <!-- Latest on top -->
 
 ## [1.0.0] 2025-11-13
+### Changed
+- Change CI workflow and added lint + build pipeline
+
+## [1.0.0] 2025-11-13
 ### Added - Production Infrastructure
 - **Security Enhancements** (`src/server.ts`)
   - Added helmet middleware for security headers (XSS protection, HSTS, etc.)
