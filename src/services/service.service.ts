@@ -2,6 +2,7 @@ import type { ServiceType } from "../types";
 import { Repository } from "typeorm";
 import { Service } from "../entities";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
+import { CacheService, CacheKeys, CacheTTL } from "../utils/cache";
 
 export class ServiceService {
     constructor(private readonly serviceRepository: Repository<Service>) {}
@@ -17,6 +18,8 @@ export class ServiceService {
             const newService = this.serviceRepository.create(data);
             await this.serviceRepository.save(newService);
 
+            await CacheService.del(CacheKeys.services());
+
             return `El servicio ${newService.name} ha sido creado`;
         }
         catch(error){
@@ -30,8 +33,11 @@ export class ServiceService {
 
     async getAll(): Promise<Service[]> {
         try{
-            const services = await this.serviceRepository.find();
-            return services;
+            return await CacheService.getOrSet(
+                CacheKeys.services(),
+                async () => await this.serviceRepository.find(),
+                CacheTTL.LONG
+            );
         }
         catch(error){
             if(error instanceof AppError){
@@ -45,7 +51,12 @@ export class ServiceService {
     async getById(data: Pick<ServiceType, "id">): Promise<Service> {
         try{
             const { id } = data;
-            const service = await this.serviceRepository.findOneBy({ id });
+
+            const service = await CacheService.getOrSet(
+                CacheKeys.service(id),
+                async () => await this.serviceRepository.findOneBy({ id }),
+                CacheTTL.LONG
+            );
 
             if (!service) {
                 throw new NotFoundError("Servicio no encontrado");
@@ -77,6 +88,9 @@ export class ServiceService {
 
             await this.serviceRepository.save(service);
 
+            await CacheService.del(CacheKeys.service(id));
+            await CacheService.del(CacheKeys.services());
+
             return "El servicio ha sido actualizado";
         }
         catch(error){
@@ -98,6 +112,9 @@ export class ServiceService {
             }
 
             await this.serviceRepository.remove(service);
+
+            await CacheService.del(CacheKeys.service(id));
+            await CacheService.del(CacheKeys.services());
 
             return `El servicio ${service.name} ha sido eliminado`;
         }

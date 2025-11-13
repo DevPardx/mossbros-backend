@@ -13,7 +13,7 @@ export const seedOwnerUser = async (): Promise<void> => {
         });
 
         if (existingUser) {
-            console.log("✅ Owner user already exists");
+            console.log("Owner user already exists");
             return;
         }
 
@@ -27,14 +27,14 @@ export const seedOwnerUser = async (): Promise<void> => {
 
         await userRepository.save(ownerUser);
 
-        console.log("✅ Owner user seeded successfully!");
-        console.log(`📧 Email: ${env.OWNER_EMAIL}`);
-        console.log(`🔑 Password: ${env.OWNER_PASSWORD}`);
-        console.log(`👤 Name: ${env.OWNER_NAME}`);
-        console.log(`📱 Phone: ${env.OWNER_PHONE}`);
-        console.log("⚠️  Please change the password after first login");
+        console.log("Owner user seeded successfully!");
+        console.log(`Email: ${env.OWNER_EMAIL}`);
+        console.log(`Password: ${env.OWNER_PASSWORD}`);
+        console.log(`Name: ${env.OWNER_NAME}`);
+        console.log(`Phone: ${env.OWNER_PHONE}`);
+        console.log("Please change the password after first login");
     } catch (error) {
-        console.error("❌ Error seeding owner user:", error);
+        console.error("Error seeding owner user:", error);
         throw error;
     }
 };

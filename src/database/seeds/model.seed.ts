@@ -15,7 +15,7 @@ export async function seedModels() {
     const brands = await brandRepository.find();
     
     if (brands.length === 0) {
-        console.log("❌ No brands found. Please seed brands first.");
+        console.log("No brands found. Please seed brands first.");
         return;
     }
 
@@ -164,6 +164,6 @@ export async function seedModels() {
     const createdModels = modelRepository.create(models);
     await modelRepository.save(createdModels);
 
-    console.log(`✅ ${models.length} Models seeded successfully`);
+    console.log(`${models.length} Models seeded successfully`);
     return createdModels;
 }
