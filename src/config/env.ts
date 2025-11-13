@@ -16,10 +16,7 @@ interface EnvConfig {
     PORT: string;
     FRONTEND_URL: string;
 
-    SMTP_HOST: string;
-    SMTP_PORT: string;
-    SMTP_USER: string;
-    SMTP_PASS: string;
+    RESEND_API_KEY: string;
 
     JWT_SECRET: string;
     JWT_REFRESH_SECRET: string;
@@ -28,6 +25,9 @@ interface EnvConfig {
     OWNER_EMAIL: string;
     OWNER_PASSWORD: string;
     OWNER_PHONE: string;
+
+    SENTRY_DSN: string;
+    SENTRY_ENVIRONMENT: string;
 }
 
 const requiredEnvVars: (keyof EnvConfig)[] = [
@@ -45,10 +45,7 @@ const requiredEnvVars: (keyof EnvConfig)[] = [
     "PORT",
     "FRONTEND_URL",
 
-    "SMTP_HOST",
-    "SMTP_PORT",
-    "SMTP_USER",
-    "SMTP_PASS",
+    "RESEND_API_KEY",
 
     "JWT_SECRET",
     "JWT_REFRESH_SECRET",
@@ -57,6 +54,9 @@ const requiredEnvVars: (keyof EnvConfig)[] = [
     "OWNER_EMAIL",
     "OWNER_PASSWORD",
     "OWNER_PHONE",
+
+    "SENTRY_DSN",
+    "SENTRY_ENVIRONMENT",
 ];
 
 export function validateEnv(): void {
@@ -125,10 +125,7 @@ export const env: EnvConfig = {
     PORT: process.env.PORT!,
     FRONTEND_URL: process.env.FRONTEND_URL!,
 
-    SMTP_HOST: process.env.SMTP_HOST!,
-    SMTP_PORT: process.env.SMTP_PORT!,
-    SMTP_USER: process.env.SMTP_USER!,
-    SMTP_PASS: process.env.SMTP_PASS!,
+    RESEND_API_KEY: process.env.RESEND_API_KEY!,
 
     JWT_SECRET: process.env.JWT_SECRET!,
     JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET!,
@@ -137,4 +134,7 @@ export const env: EnvConfig = {
     OWNER_EMAIL: process.env.OWNER_EMAIL!,
     OWNER_PASSWORD: process.env.OWNER_PASSWORD!,
     OWNER_PHONE: process.env.OWNER_PHONE!,
+
+    SENTRY_DSN: process.env.SENTRY_DSN!,
+    SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT!,
 };
