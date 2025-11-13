@@ -160,6 +160,15 @@ const options: swaggerJsdoc.Options = {
                         },
                     },
                 },
+                InternalServerError: {
+                    description: "Internal server error",
+                    content: {
+                        "application/json": {
+                            schema: { $ref: "#/components/schemas/Error" },
+                            example: { error: "Error interno del servidor" },
+                        },
+                    },
+                },
             },
         },
         tags: [
