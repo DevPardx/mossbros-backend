@@ -124,8 +124,7 @@ export class CustomerService {
                 limit,
                 totalPages: Math.ceil(total / limit)
             };
-        } catch (error) {
-            console.log(error);
+        } catch {
             throw new InternalServerError("Error al obtener clientes");
         }
     }
@@ -159,8 +158,7 @@ export class CustomerService {
                 limit,
                 totalPages: Math.ceil(total / limit)
             };
-        } catch (error) {
-            console.log(error);
+        } catch {
             throw new InternalServerError("Error al buscar clientes");
         }
     }
@@ -247,7 +245,6 @@ export class CustomerService {
                 if (error instanceof AppError) {
                     throw error;
                 }
-                console.error("Error updating customer:", error);
                 throw new InternalServerError("Error al actualizar cliente");
             }
         });

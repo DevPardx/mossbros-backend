@@ -74,10 +74,10 @@ const setupRoutes = () => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  app.use(errorHandler);
+
   logger.info("API documentation available at /api-docs");
 };
-
-connectDB();
 
 app.use(morgan("combined", { stream }));
 
@@ -91,6 +91,6 @@ if (generalLimiter) {
   app.use(generalLimiter);
 }
 
-app.use(errorHandler);
+connectDB();
 
 export default app;
