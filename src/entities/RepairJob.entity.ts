@@ -36,7 +36,6 @@ export class RepairJob {
         if (!value) return value;
         const dateStr = typeof value === "string" ? value : value.toString();
         const result = dateStr.split("T")[0];
-        console.log("Transformer from:", value, "→", result);
         return result;
       }
     }

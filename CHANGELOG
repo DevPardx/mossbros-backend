@@ -1,6 +1,34 @@
 # CHANGELOG
 <!-- Latest on top -->
 
+## [1.0.0] 2025-11-12
+### Added
+- **Repair Job History Filtering System** (`src/services/repairJob.service.ts`)
+  - Separate endpoints for active repairs and completed/cancelled history
+  - `getAll()` now excludes completed and cancelled repair jobs
+  - `getHistory()` now only includes completed and cancelled repair jobs
+  - Exact date filtering in history using PostgreSQL date casting (`::date`)
+  - COALESCE fallback to `updated_at` for jobs without `completed_at`
+  - Smart date parsing with timezone handling to prevent offset issues
+
+- **Completed Date on Cancellation** (`src/services/repairJob.service.ts`)
+  - `cancel()` method now sets `completed_at` timestamp when cancelling jobs
+  - Ensures all cancelled jobs have a completion date for filtering
+
+### Changed
+- **Code Cleanup and Quality Improvements**
+  - Removed 10 debug logs and descriptive comments from backend codebase
+  - Cleaned up `console.log`, `console.error` statements
+  - Removed commented-out code in seed files
+  - Maintained eslint directives and TypeScript comments
+  - Files cleaned: `repairJob.service.ts`, `customer.service.ts`, `rateLimiter.ts`, `RepairJob.entity.ts`, `database/seeds/index.ts`
+
+### Fixed
+- **History Date Filtering Accuracy**
+  - Fixed date comparison to use exact date matching (ignoring time component)
+  - Resolved timezone issues in date filtering with proper PostgreSQL casting
+  - History filters now work with exact calendar dates (e.g., job completed Nov 12 won't show when filtering from Nov 13)
+
 ## [1.0.0] 2025-11-07
 ### Fixed
 - **RepairJob Date Handling** (`src/services/repairJob.service.ts`)

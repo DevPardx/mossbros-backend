@@ -43,12 +43,49 @@ router.post("/",
             .optional()
             .isUUID()
             .withMessage("motorcycle_id debe ser un UUID válido"),
+        query("page")
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage("page debe ser un número entero mayor a 0"),
+        query("limit")
+            .optional()
+            .isInt({ min: 1, max: 100 })
+            .withMessage("limit debe ser un número entero entre 1 y 100"),
         handleInputErrors,
         repairJobController.getAll
     );
 
     router.get("/statistics",
         repairJobController.getStatistics
+    );
+
+    router.get("/date-range",
+        repairJobController.getDateRange
+    );
+
+    router.get("/history",
+        query("page")
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage("page debe ser un número entero mayor a 0"),
+        query("limit")
+            .optional()
+            .isInt({ min: 1, max: 100 })
+            .withMessage("limit debe ser un número entero entre 1 y 100"),
+        query("date_from")
+            .optional()
+            .isISO8601()
+            .withMessage("date_from debe ser una fecha válida en formato ISO8601"),
+        query("date_to")
+            .optional()
+            .isISO8601()
+            .withMessage("date_to debe ser una fecha válida en formato ISO8601"),
+        query("search")
+            .optional()
+            .isString()
+            .withMessage("search debe ser una cadena de texto"),
+        handleInputErrors,
+        repairJobController.getHistory
     );
 
     router.get("/:id",

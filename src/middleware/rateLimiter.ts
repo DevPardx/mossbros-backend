@@ -32,7 +32,7 @@ export const createAuthLimiter = (redisClient: RedisClient): RateLimitRequestHan
         max: RATE_LIMIT.AUTH.MAX_REQUESTS,
         standardHeaders: true,
         legacyHeaders: false,
-        skipSuccessfulRequests: true, // Don't count successful login attempts
+        skipSuccessfulRequests: true,
         store: new RedisStore({
             sendCommand: (...args: string[]) => redisClient.sendCommand(args),
             prefix: "rl:auth:",
