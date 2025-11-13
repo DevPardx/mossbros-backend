@@ -1,6 +1,6 @@
 import winston from "winston";
 
-const { combine, timestamp, printf, colorize, errors } = winston.format;
+const { combine, timestamp, printf, colorize, errors, json } = winston.format;
 
 const logFormat = printf(({ level, message, timestamp, stack }) => {
     return `${timestamp} [${level}]: ${stack || message}`;
@@ -14,9 +14,9 @@ const developmentFormat = combine(
 );
 
 const productionFormat = combine(
-    timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+    timestamp(),
     errors({ stack: true }),
-    logFormat
+    json()
 );
 
 const isDevelopment = process.env.NODE_ENV === "development";

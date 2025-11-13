@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import * as Sentry from "@sentry/node";
 import { AppError } from "../handler/error.handler";
 import logger from "../utils/logger";
 
@@ -7,6 +8,7 @@ export const errorHandler = ( err: Error, _req: Request, res: Response, _next: N
     if (err instanceof AppError) {
         if (err.statusCode >= 500) {
             logger.error(`AppError [${err.statusCode}]: ${err.message}`, { stack: err.stack });
+            Sentry.captureException(err);
         } else {
             logger.warn(`AppError [${err.statusCode}]: ${err.message}`);
         }
@@ -17,6 +19,7 @@ export const errorHandler = ( err: Error, _req: Request, res: Response, _next: N
     }
 
     logger.error("Unexpected error:", err);
+    Sentry.captureException(err);
 
     return res.status(500).json({
         error: "Internal server error",

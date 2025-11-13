@@ -1,4 +1,4 @@
-import { transport } from "../config/nodemailer";
+import resend from "../config/resend";
 import { Repository } from "typeorm";
 import { User } from "../entities/User.entity";
 import { AppError, BadRequestError, InternalServerError, NotFoundError, UnauthorizedError } from "../handler/error.handler";
@@ -87,7 +87,7 @@ export class AuthService {
                 token_expires_at: expiresAt
             });
 
-            await transport.sendMail({
+            await resend.emails.send({
                 from: "<no-reply@mossbros.com>",
                 to: user.email,
                 subject: "Restablecimiento de contraseña",
