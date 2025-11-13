@@ -7,6 +7,7 @@ import { Customer } from "../entities/Customer.entity";
 import { RepairStatus } from "../enums";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
 import { assertExists, assertSameLength } from "../utils/validation.utils";
+import { CacheService, CacheKeys, CacheTTL } from "../utils/cache";
 import type { CreateRepairJobType, UpdateRepairJobType, RepairJobWorkflowType, PaginatedResponse, RepairJobHistoryFilters, RepairJobFilters } from "../types";
 
 interface WorkflowRule {
@@ -156,6 +157,8 @@ export class RepairJobService {
 
             await this.repairJobRepository.save(repairJob);
 
+            await CacheService.del(CacheKeys.statistics());
+
             return "Trabajo de reparación creado exitosamente";
 
         } catch (error) {
@@ -295,6 +298,8 @@ export class RepairJobService {
 
             await this.repairJobRepository.save(repairJob);
 
+            await CacheService.del(CacheKeys.statistics());
+
             return "Estado actualizado";
 
         } catch (error) {
@@ -326,6 +331,8 @@ export class RepairJobService {
                 repairJob.completed_at = new Date();
             }
             await this.repairJobRepository.save(repairJob);
+
+            await CacheService.del(CacheKeys.statistics());
 
             return "Trabajo de reparación cancelado";
 
@@ -399,46 +406,52 @@ export class RepairJobService {
 
     async getStatistics() {
         try {
-            const now = new Date();
-            const currentMonth = this.getMonthBoundaries(now.getFullYear(), now.getMonth());
-            const previousMonth = this.getMonthBoundaries(now.getFullYear(), now.getMonth() - 1);
+            return await CacheService.getOrSet(
+                CacheKeys.statistics(),
+                async () => {
+                    const now = new Date();
+                    const currentMonth = this.getMonthBoundaries(now.getFullYear(), now.getMonth());
+                    const previousMonth = this.getMonthBoundaries(now.getFullYear(), now.getMonth() - 1);
 
-            const [completedJobsCurrentMonth, currentNewClients] = await Promise.all([
-                this.getCompletedJobsInPeriod(currentMonth.start, currentMonth.end),
-                this.getNewCustomersCountInPeriod(currentMonth.start, currentMonth.end)
-            ]);
+                    const [completedJobsCurrentMonth, currentNewClients] = await Promise.all([
+                        this.getCompletedJobsInPeriod(currentMonth.start, currentMonth.end),
+                        this.getNewCustomersCountInPeriod(currentMonth.start, currentMonth.end)
+                    ]);
 
-            const [completedJobsPreviousMonth, previousNewClients] = await Promise.all([
-                this.getCompletedJobsInPeriod(previousMonth.start, previousMonth.end),
-                this.getNewCustomersCountInPeriod(previousMonth.start, previousMonth.end)
-            ]);
+                    const [completedJobsPreviousMonth, previousNewClients] = await Promise.all([
+                        this.getCompletedJobsInPeriod(previousMonth.start, previousMonth.end),
+                        this.getNewCustomersCountInPeriod(previousMonth.start, previousMonth.end)
+                    ]);
 
-            const currentTotalRevenue = this.calculateRevenueFromJobs(completedJobsCurrentMonth);
-            const previousTotalRevenue = this.calculateRevenueFromJobs(completedJobsPreviousMonth);
-            const currentJobsCompleted = completedJobsCurrentMonth.length;
-            const previousJobsCompleted = completedJobsPreviousMonth.length;
+                    const currentTotalRevenue = this.calculateRevenueFromJobs(completedJobsCurrentMonth);
+                    const previousTotalRevenue = this.calculateRevenueFromJobs(completedJobsPreviousMonth);
+                    const currentJobsCompleted = completedJobsCurrentMonth.length;
+                    const previousJobsCompleted = completedJobsPreviousMonth.length;
 
-            const revenueChange = this.calculatePercentageChange(currentTotalRevenue, previousTotalRevenue);
-            const clientsChange = this.calculatePercentageChange(currentNewClients, previousNewClients);
-            const jobsChange = this.calculatePercentageChange(currentJobsCompleted, previousJobsCompleted);
+                    const revenueChange = this.calculatePercentageChange(currentTotalRevenue, previousTotalRevenue);
+                    const clientsChange = this.calculatePercentageChange(currentNewClients, previousNewClients);
+                    const jobsChange = this.calculatePercentageChange(currentJobsCompleted, previousJobsCompleted);
 
-            return {
-                total_revenue: {
-                    value: currentTotalRevenue,
-                    percentage_change: revenueChange,
-                    trend: revenueChange >= 0 ? "up" : "down"
+                    return {
+                        total_revenue: {
+                            value: currentTotalRevenue,
+                            percentage_change: revenueChange,
+                            trend: revenueChange >= 0 ? "up" : "down"
+                        },
+                        new_clients: {
+                            value: currentNewClients,
+                            percentage_change: clientsChange,
+                            trend: clientsChange >= 0 ? "up" : "down"
+                        },
+                        jobs_completed: {
+                            value: currentJobsCompleted,
+                            percentage_change: jobsChange,
+                            trend: jobsChange >= 0 ? "up" : "down"
+                        }
+                    };
                 },
-                new_clients: {
-                    value: currentNewClients,
-                    percentage_change: clientsChange,
-                    trend: clientsChange >= 0 ? "up" : "down"
-                },
-                jobs_completed: {
-                    value: currentJobsCompleted,
-                    percentage_change: jobsChange,
-                    trend: jobsChange >= 0 ? "up" : "down"
-                }
-            };
+                CacheTTL.MEDIUM
+            );
 
         } catch (error) {
             if (error instanceof AppError) {

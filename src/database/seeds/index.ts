@@ -4,7 +4,7 @@ import { seedModels } from "./model.seed";
 import { seedServices } from "./service.seed";
 
 export const runAllSeeds = async (): Promise<void> => {
-  console.log("🚀 Starting database seeding...");
+  console.log("Starting database seeding...");
 
   try {
     await seedOwnerUser();
@@ -12,9 +12,9 @@ export const runAllSeeds = async (): Promise<void> => {
     await seedModels();
     await seedServices();
 
-    console.log("🎊 All seeds completed successfully!");
+    console.log("All seeds completed successfully!");
   } catch (error) {
-    console.error("💥 Database seeding failed:", error);
+    console.error("Database seeding failed:", error);
     throw error;
   }
 };

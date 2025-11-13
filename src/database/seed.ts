@@ -5,18 +5,18 @@ import { AppDataSource } from "../config/typeorm";
 import { runAllSeeds } from "./seeds";
 
 const runSeeds = async () => {
-    console.log("🌱 Starting manual seed process...");
+    console.log("Starting manual seed process...");
 
     try {
         await AppDataSource.initialize();
-        console.log("✅ Database connection established");
+        console.log("Database connection established");
 
         await runAllSeeds();
 
-        console.log("🎉 Manual seeding completed successfully!");
+        console.log("Manual seeding completed successfully!");
         process.exit(0);
     } catch (error) {
-        console.error("💥 Manual seeding failed:", error);
+        console.error("Manual seeding failed:", error);
         process.exit(1);
     }
 };

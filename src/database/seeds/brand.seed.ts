@@ -76,6 +76,6 @@ export async function seedBrands() {
     const createdBrands = brandRepository.create(brands);
     await brandRepository.save(createdBrands);
 
-    console.log("✅ Brands seeded successfully");
+    console.log("Brands seeded successfully");
     return createdBrands;
 }

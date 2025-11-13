@@ -1,6 +1,7 @@
 import { Repository } from "typeorm";
 import { Brand } from "../entities/Brand.entity";
 import { assertExists, assertTrue } from "../utils/validation.utils";
+import { CacheService, CacheKeys, CacheTTL } from "../utils/cache";
 import type { BrandType } from "../types";
 
 export class BrandService {
@@ -16,16 +17,27 @@ export class BrandService {
         const newBrand = this.brandRepository.create(data);
         await this.brandRepository.save(newBrand);
 
+        await CacheService.delPattern("brands:*");
+
         return `La marca ${newBrand.name} ha sido creada`;
     }
 
     async getAll(): Promise<Brand[]> {
-        return await this.brandRepository.find();
+        return await CacheService.getOrSet(
+            CacheKeys.brands(),
+            async () => await this.brandRepository.find(),
+            CacheTTL.LONG
+        );
     }
 
     async getById(data: Pick<BrandType, "id">): Promise<Brand> {
         const { id } = data;
-        const brand = await this.brandRepository.findOneBy({ id });
+
+        const brand = await CacheService.getOrSet(
+            CacheKeys.brand(id),
+            async () => await this.brandRepository.findOneBy({ id }),
+            CacheTTL.LONG
+        );
 
         assertExists(brand, "Marca");
 
@@ -44,6 +56,9 @@ export class BrandService {
 
         await this.brandRepository.save(brand);
 
+        await CacheService.delPattern("brands:*");
+        await CacheService.del(CacheKeys.brand(id));
+
         return "La marca ha sido actualizada";
     }
 
@@ -54,6 +69,10 @@ export class BrandService {
         assertExists(brand, "Marca");
 
         await this.brandRepository.remove(brand);
+
+        await CacheService.delPattern("brands:*");
+        await CacheService.del(CacheKeys.brand(id));
+        await CacheService.delPattern(`models:brand:${id}`);
 
         return `La marca ${brand.name} ha sido eliminada`;
     }
