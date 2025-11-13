@@ -54,9 +54,9 @@ export async function seedServices() {
     const savedServices = await serviceRepository.save(services);
 
     savedServices.forEach((service) => {
-        console.log(`✅ Created service: ${service.name} - $${service.price}`);
+        console.log(`Created service: ${service.name} - $${service.price}`);
     });
 
-    console.log(`✅ ${savedServices.length} Services seeded successfully`);
+    console.log(`${savedServices.length} Services seeded successfully`);
     return savedServices;
 }

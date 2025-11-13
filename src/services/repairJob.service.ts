@@ -7,7 +7,8 @@ import { Customer } from "../entities/Customer.entity";
 import { RepairStatus } from "../enums";
 import { AppError, BadRequestError, InternalServerError, NotFoundError } from "../handler/error.handler";
 import { assertExists, assertSameLength } from "../utils/validation.utils";
-import type { CreateRepairJobType, UpdateRepairJobType, RepairJobWorkflowType } from "../types";
+import { CacheService, CacheKeys, CacheTTL } from "../utils/cache";
+import type { CreateRepairJobType, UpdateRepairJobType, RepairJobWorkflowType, PaginatedResponse, RepairJobHistoryFilters, RepairJobFilters } from "../types";
 
 interface WorkflowRule {
     allowed_transitions: readonly RepairStatus[];
@@ -156,6 +157,8 @@ export class RepairJobService {
 
             await this.repairJobRepository.save(repairJob);
 
+            await CacheService.del(CacheKeys.statistics());
+
             return "Trabajo de reparación creado exitosamente";
 
         } catch (error) {
@@ -166,15 +169,22 @@ export class RepairJobService {
         }
     }
 
-    async getAll(filters?: { status?: RepairStatus; motorcycle_id?: string }) {
+    async getAll(filters?: RepairJobFilters): Promise<PaginatedResponse<RepairJob>> {
         try {
+            const page = filters?.page || 1;
+            const limit = filters?.limit || 10;
+            const skip = (page - 1) * limit;
+
             const query = this.repairJobRepository.createQueryBuilder("repair_job")
                 .leftJoinAndSelect("repair_job.motorcycle", "motorcycle")
                 .leftJoinAndSelect("motorcycle.customer", "customer")
                 .leftJoinAndSelect("motorcycle.brand", "brand")
                 .leftJoinAndSelect("motorcycle.model", "model")
-                .leftJoinAndSelect("repair_job.services", "services")
-                .orderBy("repair_job.created_at", "DESC");
+                .leftJoinAndSelect("repair_job.services", "services");
+
+            query.andWhere("repair_job.status NOT IN (:...excludedStatuses)", {
+                excludedStatuses: [RepairStatus.COMPLETED, RepairStatus.CANCELLED]
+            });
 
             if (filters?.status) {
                 query.andWhere("repair_job.status = :status", { status: filters.status });
@@ -184,8 +194,24 @@ export class RepairJobService {
                 query.andWhere("repair_job.motorcycle_id = :motorcycle_id", { motorcycle_id: filters.motorcycle_id });
             }
 
-            const repairJobs = await query.getMany();
-            return repairJobs;
+            query.orderBy("repair_job.created_at", "DESC");
+
+            const [data, total] = await query
+                .skip(skip)
+                .take(limit)
+                .getManyAndCount();
+
+            const total_pages = Math.ceil(total / limit);
+
+            return {
+                data,
+                metadata: {
+                    total,
+                    page,
+                    limit,
+                    total_pages
+                }
+            };
 
         } catch (error) {
             if (error instanceof AppError) {
@@ -229,13 +255,10 @@ export class RepairJobService {
 
             if (data.notes !== undefined) repairJob.notes = data.notes;
             if (data.estimated_completion) {
-                console.log("Received estimated_completion:", data.estimated_completion);
                 repairJob.estimated_completion = data.estimated_completion as Date | string;
-                console.log("Set estimated_completion as string:", repairJob.estimated_completion);
             }
 
-            const saved = await this.repairJobRepository.save(repairJob);
-            console.log("Saved repair job estimated_completion:", saved.estimated_completion);
+            await this.repairJobRepository.save(repairJob);
 
             return "Trabajo de reparación actualizado exitosamente";
 
@@ -275,6 +298,8 @@ export class RepairJobService {
 
             await this.repairJobRepository.save(repairJob);
 
+            await CacheService.del(CacheKeys.statistics());
+
             return "Estado actualizado";
 
         } catch (error) {
@@ -302,7 +327,12 @@ export class RepairJobService {
             }
 
             repairJob.status = RepairStatus.CANCELLED;
+            if (!repairJob.completed_at) {
+                repairJob.completed_at = new Date();
+            }
             await this.repairJobRepository.save(repairJob);
+
+            await CacheService.del(CacheKeys.statistics());
 
             return "Trabajo de reparación cancelado";
 
@@ -376,44 +406,158 @@ export class RepairJobService {
 
     async getStatistics() {
         try {
-            const now = new Date();
-            const currentMonth = this.getMonthBoundaries(now.getFullYear(), now.getMonth());
-            const previousMonth = this.getMonthBoundaries(now.getFullYear(), now.getMonth() - 1);
+            return await CacheService.getOrSet(
+                CacheKeys.statistics(),
+                async () => {
+                    const now = new Date();
+                    const currentMonth = this.getMonthBoundaries(now.getFullYear(), now.getMonth());
+                    const previousMonth = this.getMonthBoundaries(now.getFullYear(), now.getMonth() - 1);
 
-            const [completedJobsCurrentMonth, currentNewClients] = await Promise.all([
-                this.getCompletedJobsInPeriod(currentMonth.start, currentMonth.end),
-                this.getNewCustomersCountInPeriod(currentMonth.start, currentMonth.end)
-            ]);
+                    const [completedJobsCurrentMonth, currentNewClients] = await Promise.all([
+                        this.getCompletedJobsInPeriod(currentMonth.start, currentMonth.end),
+                        this.getNewCustomersCountInPeriod(currentMonth.start, currentMonth.end)
+                    ]);
 
-            const [completedJobsPreviousMonth, previousNewClients] = await Promise.all([
-                this.getCompletedJobsInPeriod(previousMonth.start, previousMonth.end),
-                this.getNewCustomersCountInPeriod(previousMonth.start, previousMonth.end)
-            ]);
+                    const [completedJobsPreviousMonth, previousNewClients] = await Promise.all([
+                        this.getCompletedJobsInPeriod(previousMonth.start, previousMonth.end),
+                        this.getNewCustomersCountInPeriod(previousMonth.start, previousMonth.end)
+                    ]);
 
-            const currentTotalRevenue = this.calculateRevenueFromJobs(completedJobsCurrentMonth);
-            const previousTotalRevenue = this.calculateRevenueFromJobs(completedJobsPreviousMonth);
-            const currentJobsCompleted = completedJobsCurrentMonth.length;
-            const previousJobsCompleted = completedJobsPreviousMonth.length;
+                    const currentTotalRevenue = this.calculateRevenueFromJobs(completedJobsCurrentMonth);
+                    const previousTotalRevenue = this.calculateRevenueFromJobs(completedJobsPreviousMonth);
+                    const currentJobsCompleted = completedJobsCurrentMonth.length;
+                    const previousJobsCompleted = completedJobsPreviousMonth.length;
 
-            const revenueChange = this.calculatePercentageChange(currentTotalRevenue, previousTotalRevenue);
-            const clientsChange = this.calculatePercentageChange(currentNewClients, previousNewClients);
-            const jobsChange = this.calculatePercentageChange(currentJobsCompleted, previousJobsCompleted);
+                    const revenueChange = this.calculatePercentageChange(currentTotalRevenue, previousTotalRevenue);
+                    const clientsChange = this.calculatePercentageChange(currentNewClients, previousNewClients);
+                    const jobsChange = this.calculatePercentageChange(currentJobsCompleted, previousJobsCompleted);
+
+                    return {
+                        total_revenue: {
+                            value: currentTotalRevenue,
+                            percentage_change: revenueChange,
+                            trend: revenueChange >= 0 ? "up" : "down"
+                        },
+                        new_clients: {
+                            value: currentNewClients,
+                            percentage_change: clientsChange,
+                            trend: clientsChange >= 0 ? "up" : "down"
+                        },
+                        jobs_completed: {
+                            value: currentJobsCompleted,
+                            percentage_change: jobsChange,
+                            trend: jobsChange >= 0 ? "up" : "down"
+                        }
+                    };
+                },
+                CacheTTL.MEDIUM
+            );
+
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new InternalServerError("Error al obtener estadísticas");
+        }
+    }
+
+    async getDateRange(): Promise<{ min_year: number; max_year: number }> {
+        try {
+            const result = await this.repairJobRepository
+                .createQueryBuilder("repair_job")
+                .select("MIN(repair_job.created_at)", "min_date")
+                .addSelect("MAX(repair_job.created_at)", "max_date")
+                .getRawOne();
+
+            const currentYear = new Date().getFullYear();
+            const minYear = result?.min_date ? new Date(result.min_date).getFullYear() : currentYear;
+            const maxYear = result?.max_date ? new Date(result.max_date).getFullYear() : currentYear;
 
             return {
-                total_revenue: {
-                    value: currentTotalRevenue,
-                    percentage_change: revenueChange,
-                    trend: revenueChange >= 0 ? "up" : "down"
-                },
-                new_clients: {
-                    value: currentNewClients,
-                    percentage_change: clientsChange,
-                    trend: clientsChange >= 0 ? "up" : "down"
-                },
-                jobs_completed: {
-                    value: currentJobsCompleted,
-                    percentage_change: jobsChange,
-                    trend: jobsChange >= 0 ? "up" : "down"
+                min_year: minYear,
+                max_year: maxYear
+            };
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new InternalServerError("Error al obtener el rango de fechas");
+        }
+    }
+
+    async getHistory(filters: RepairJobHistoryFilters): Promise<PaginatedResponse<RepairJob>> {
+        try {
+            const page = filters.page || 1;
+            const limit = filters.limit || 10;
+            const skip = (page - 1) * limit;
+
+            const query = this.repairJobRepository.createQueryBuilder("repair_job")
+                .leftJoinAndSelect("repair_job.motorcycle", "motorcycle")
+                .leftJoinAndSelect("motorcycle.customer", "customer")
+                .leftJoinAndSelect("motorcycle.brand", "brand")
+                .leftJoinAndSelect("motorcycle.model", "model")
+                .leftJoinAndSelect("repair_job.services", "services")
+                .addSelect("COALESCE(repair_job.completed_at, repair_job.updated_at)", "completion_date");
+
+            query.andWhere("repair_job.status IN (:...historyStatuses)", {
+                historyStatuses: [RepairStatus.COMPLETED, RepairStatus.CANCELLED]
+            });
+
+            if (filters.date_from) {
+                const parts = filters.date_from.split("-");
+                if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+                    const year = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10);
+                    const day = parseInt(parts[2], 10);
+                    if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                        const dateFrom = new Date(year, month - 1, day, 0, 0, 0, 0);
+                        query.andWhere(
+                            "(COALESCE(repair_job.completed_at, repair_job.updated_at))::date >= :date_from::date",
+                            { date_from: dateFrom }
+                        );
+                    }
+                }
+            }
+
+            if (filters.date_to) {
+                const parts = filters.date_to.split("-");
+                if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+                    const year = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10);
+                    const day = parseInt(parts[2], 10);
+                    if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                        const dateTo = new Date(year, month - 1, day, 23, 59, 59, 999);
+                        query.andWhere(
+                            "(COALESCE(repair_job.completed_at, repair_job.updated_at))::date <= :date_to::date",
+                            { date_to: dateTo }
+                        );
+                    }
+                }
+            }
+
+            if (filters.search) {
+                query.andWhere(
+                    "(LOWER(customer.name) LIKE LOWER(:search) OR LOWER(motorcycle.plate) LIKE LOWER(:search))",
+                    { search: `%${filters.search}%` }
+                );
+            }
+
+            query.orderBy("completion_date", "DESC");
+
+            const [data, total] = await query
+                .skip(skip)
+                .take(limit)
+                .getManyAndCount();
+
+            const total_pages = Math.ceil(total / limit);
+
+            return {
+                data,
+                metadata: {
+                    total,
+                    page,
+                    limit,
+                    total_pages
                 }
             };
 
@@ -421,7 +565,7 @@ export class RepairJobService {
             if (error instanceof AppError) {
                 throw error;
             }
-            throw new InternalServerError("Error al obtener estadísticas");
+            throw new InternalServerError("Error al obtener el historial de reparaciones");
         }
     }
 }

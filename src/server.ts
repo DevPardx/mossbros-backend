@@ -3,8 +3,6 @@ import "dotenv/config";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import helmet from "helmet";
-import compression from "compression";
 import { createAuthRoutes } from "./routes/auth";
 import { createBrandRoutes } from "./routes/brands";
 import { createModelRoutes } from "./routes/models";
@@ -76,19 +74,10 @@ const setupRoutes = () => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  app.use(errorHandler);
+
   logger.info("API documentation available at /api-docs");
 };
-
-connectDB();
-
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP for API
-  crossOriginEmbedderPolicy: false,
-}));
-
-// Compression middleware
-app.use(compression());
 
 app.use(morgan("combined", { stream }));
 
@@ -102,6 +91,6 @@ if (generalLimiter) {
   app.use(generalLimiter);
 }
 
-app.use(errorHandler);
+connectDB();
 
 export default app;

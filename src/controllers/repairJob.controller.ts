@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { RepairJobService } from "../services/repairJob.service";
 import { RepairStatus } from "../enums";
 import { getRequiredParam } from "../utils/request";
+import type { RepairJobHistoryFilters, RepairJobFilters } from "../types";
 
 export class RepairJobController {
     constructor(private readonly repairJobService: RepairJobService) {}
@@ -12,20 +13,23 @@ export class RepairJobController {
     };
 
     getAll = async (req: Request, res: Response): Promise<Response> => {
-        const { status, motorcycle_id } = req.query;
+        const { status, motorcycle_id, page, limit } = req.query;
 
-        const filters: { status?: RepairStatus; motorcycle_id?: string } = {};
+        const filters: RepairJobFilters = {
+            page: page ? parseInt(page as string, 10) : undefined,
+            limit: limit ? parseInt(limit as string, 10) : undefined,
+        };
 
         if (status && Object.values(RepairStatus).includes(status as RepairStatus)) {
-            filters.status = status as RepairStatus;
+            filters.status = status as string;
         }
 
         if (motorcycle_id && typeof motorcycle_id === "string") {
             filters.motorcycle_id = motorcycle_id;
         }
 
-        const repairJobs = await this.repairJobService.getAll(filters);
-        return res.status(200).json(repairJobs);
+        const response = await this.repairJobService.getAll(filters);
+        return res.status(200).json(response);
     };
 
     getById = async (req: Request, res: Response): Promise<Response> => {
@@ -67,6 +71,26 @@ export class RepairJobController {
 
     getStatistics = async (_req: Request, res: Response): Promise<Response> => {
         const response = await this.repairJobService.getStatistics();
+        return res.status(200).json(response);
+    };
+
+    getHistory = async (req: Request, res: Response): Promise<Response> => {
+        const { page, limit, date_from, date_to, search } = req.query;
+
+        const filters: RepairJobHistoryFilters = {
+            page: page ? parseInt(page as string, 10) : undefined,
+            limit: limit ? parseInt(limit as string, 10) : undefined,
+            date_from: date_from as string | undefined,
+            date_to: date_to as string | undefined,
+            search: search as string | undefined
+        };
+
+        const response = await this.repairJobService.getHistory(filters);
+        return res.status(200).json(response);
+    };
+
+    getDateRange = async (_req: Request, res: Response): Promise<Response> => {
+        const response = await this.repairJobService.getDateRange();
         return res.status(200).json(response);
     };
 }

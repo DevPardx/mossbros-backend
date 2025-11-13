@@ -94,3 +94,30 @@ export type RepairJobWorkflowType = {
     can_cancel: boolean;
     requires_confirmation: boolean;
 }
+
+export type PaginationMetadata = {
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+}
+
+export type PaginatedResponse<T> = {
+    data: T[];
+    metadata: PaginationMetadata;
+}
+
+export type RepairJobHistoryFilters = {
+    page?: number;
+    limit?: number;
+    date_from?: string;
+    date_to?: string;
+    search?: string;
+}
+
+export type RepairJobFilters = {
+    status?: string;
+    motorcycle_id?: string;
+    page?: number;
+    limit?: number;
+}
