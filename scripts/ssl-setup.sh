@@ -5,6 +5,9 @@
 
 set -e
 
+# Change to backend directory (parent of scripts directory)
+cd "$(dirname "$0")/.."
+
 DOMAIN="api.mossbrossv.com"
 EMAIL="admin@mossbrossv.com"  # Change this to your email
 
@@ -82,5 +85,5 @@ echo "Certificate location: ./certbot/conf/live/$DOMAIN/"
 echo ""
 echo "Next steps:"
 echo "1. The backend.conf file is already configured to use this certificate"
-echo "2. Run: ./deploy.sh to start the full application with SSL"
+echo "2. Run: ./scripts/deploy.sh to start the full application with SSL"
 echo ""

@@ -20,8 +20,7 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 
-COPY --from=builder /app/src/entities ./dist/entities
-COPY --from=builder /app/src/migrations ./dist/migrations
+COPY --from=builder /app/src ./src
 
 RUN mkdir -p logs
 

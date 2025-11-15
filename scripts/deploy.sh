@@ -5,6 +5,9 @@
 
 set -e
 
+# Change to backend directory (parent of scripts directory)
+cd "$(dirname "$0")/.."
+
 COMPOSE_FILE="docker-compose.production.yml"
 ENV_FILE=".env.production"
 
@@ -20,8 +23,8 @@ if [ ! -f "$ENV_FILE" ]; then
     echo "Please create $ENV_FILE file with your production configuration."
     echo "You can use .env.production.example as a template:"
     echo ""
-    echo "  cp .env.production.example .env.production"
-    echo "  nano .env.production  # Edit with your values"
+    echo "  cp .env.example .env"
+    echo "  nano .env  # Edit with your values"
     echo ""
     exit 1
 fi
@@ -49,8 +52,8 @@ backup_database() {
     mkdir -p backups/postgres
 
     docker compose -f $COMPOSE_FILE exec -T postgres pg_dump \
-        -U ${POSTGRES_USER:-mossbros_user} \
-        ${POSTGRES_DB:-mossbros_production} > $BACKUP_FILE || {
+        -U ${POSTGRES_USER:-postgres} \
+        ${POSTGRES_DB:-mossbros} > $BACKUP_FILE || {
         echo "Database backup failed"
         return 1
     }
@@ -111,10 +114,10 @@ case $COMMAND in
         echo "Your API is now running at: https://api.mossbrossv.com"
         echo ""
         echo "Useful commands:"
-        echo "  ./deploy.sh logs      - View logs"
-        echo "  ./deploy.sh status    - Check status"
-        echo "  ./deploy.sh restart   - Restart services"
-        echo "  ./deploy.sh backup    - Create database backup"
+        echo "  ./scripts/deploy.sh logs      - View logs"
+        echo "  ./scripts/deploy.sh status    - Check status"
+        echo "  ./scripts/deploy.sh restart   - Restart services"
+        echo "  ./scripts/deploy.sh backup    - Create database backup"
         echo ""
         ;;
 
@@ -156,7 +159,7 @@ case $COMMAND in
     restore)
         if [ -z "$2" ]; then
             echo "Error: Please specify backup file"
-            echo "Usage: ./deploy.sh restore <backup_file>"
+            echo "Usage: ./scripts/deploy.sh restore <backup_file>"
             echo ""
             echo "Available backups:"
             ls -lh backups/postgres/backup_*.sql 2>/dev/null || echo "No backups found"
@@ -179,8 +182,8 @@ case $COMMAND in
 
         echo "Restoring database from backup..."
         cat $BACKUP_FILE | docker compose -f $COMPOSE_FILE exec -T postgres psql \
-            -U ${POSTGRES_USER:-mossbros_user} \
-            ${POSTGRES_DB:-mossbros_production}
+            -U ${POSTGRES_USER:-postgres} \
+            ${POSTGRES_DB:-mossbros}
 
         echo "Database restored successfully"
         ;;
@@ -227,7 +230,7 @@ case $COMMAND in
         ;;
 
     *)
-        echo "Usage: ./deploy.sh [command]"
+        echo "Usage: ./scripts/deploy.sh [command]"
         echo ""
         echo "Commands:"
         echo "  deploy      - Full deployment (build, migrate, start)"
