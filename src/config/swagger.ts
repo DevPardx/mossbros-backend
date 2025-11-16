@@ -1,5 +1,8 @@
 import swaggerJsdoc from "swagger-jsdoc";
+import path from "path";
 import { env } from "./env";
+
+const isProduction = env.NODE_ENV === "production";
 
 const options: swaggerJsdoc.Options = {
     definition: {
@@ -199,10 +202,20 @@ const options: swaggerJsdoc.Options = {
         ],
     },
     apis: [
-        env.NODE_ENV === "production"
-            ? "./dist/routes/*.js"
-            : "./src/routes/*.ts"
+        isProduction
+            ? path.join(__dirname, "../routes/*.js")
+            : path.join(process.cwd(), "src/routes/*.ts")
     ],
 };
 
+// Log the path being used for debugging
+console.log("[Swagger] Environment:", env.NODE_ENV);
+console.log("[Swagger] Scanning path:", isProduction
+    ? path.join(__dirname, "../routes/*.js")
+    : path.join(process.cwd(), "src/routes/*.ts"));
+console.log("[Swagger] __dirname:", __dirname);
+
 export const swaggerSpec = swaggerJsdoc(options);
+
+// Log number of paths found
+console.log("[Swagger] Total paths found:", Object.keys(swaggerSpec.paths || {}).length);
