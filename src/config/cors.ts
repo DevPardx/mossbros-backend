@@ -6,6 +6,9 @@ export const corsConfig: CorsOptions = {
 
     if(process.env.NODE_ENV === "development") {
       whitelist.push(undefined);
+      if (origin && origin.startsWith("http://localhost:")) {
+        return callback(null, true);
+      }
     }
 
     if (whitelist.includes(origin)) {
