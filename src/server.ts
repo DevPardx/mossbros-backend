@@ -60,11 +60,6 @@ export const initializeRateLimiters = (redisClient: any) => {
 };
 
 const setupRoutes = () => {
-  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-    customCss: ".swagger-ui .topbar { display: none }",
-    customSiteTitle: "MossBros Taller API Docs",
-  }));
-
   app.use("/api/v1/auth", createAuthRoutes(serviceContainer, authLimiter, passwordResetLimiter));
   app.use("/api/v1/brands", createBrandRoutes(serviceContainer));
   app.use("/api/v1/models", createModelRoutes(serviceContainer));
@@ -81,6 +76,12 @@ const setupRoutes = () => {
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+// Swagger documentation - before CORS to allow public access
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: ".swagger-ui .topbar { display: none }",
+  customSiteTitle: "MossBros Taller API Docs",
+}));
 
 app.use(helmet());
 
