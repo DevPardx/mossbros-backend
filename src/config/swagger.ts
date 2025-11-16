@@ -18,10 +18,12 @@ const options: swaggerJsdoc.Options = {
         },
         servers: [
             {
-                url: env.NODE_ENV === "production"
-                    ? "https://api.mossbrossv.com/api/v1"
-                    : `http://localhost:${env.PORT || 4000}/api/v1`,
-                description: env.NODE_ENV === "production" ? "Production server" : "Development server",
+                url: "https://api.mossbrossv.com/api/v1",
+                description: "Production server",
+            },
+            {
+                url: `http://localhost:${env.PORT || 4000}/api/v1`,
+                description: "Development server",
             },
         ],
         components: {
@@ -226,3 +228,6 @@ console.log("[Swagger] Total paths found:", Object.keys(paths as object).length)
 if (Object.keys(paths as object).length > 0) {
     console.log("[Swagger] Sample paths:", Object.keys(paths as object).slice(0, 5));
 }
+
+// Log server configuration
+console.log("[Swagger] Configured servers:", (swaggerSpec as Record<string, unknown>).servers);
