@@ -138,8 +138,8 @@ jobs:
 
       - name: Notify deployment success
         if: success()
-        run: echo "Deployment successful! 🎉"
+        run: echo "Deployment successful!"
 
       - name: Notify deployment failure
         if: failure()
-        run: echo "Deployment failed! ❌"
+        run: echo "Deployment failed!"
