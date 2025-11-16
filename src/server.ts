@@ -84,13 +84,14 @@ app.get("/api-docs.json", (_req, res) => {
 });
 
 // Swagger documentation - before CORS to allow public access
-app.use("/api-docs", swaggerUi.serve);
-app.get("/api-docs", swaggerUi.setup(swaggerSpec, {
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: ".swagger-ui .topbar { display: none }",
   customSiteTitle: "MossBros Taller API Docs",
 }));
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP to allow Swagger UI inline scripts
+}));
 
 app.use(compression());
 
