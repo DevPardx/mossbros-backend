@@ -41,16 +41,20 @@ export const verifyJwtCookie = async (req: Request, _res: Response, next: NextFu
 };
 
 export const authenticate = async (req: Request, _res: Response, next: NextFunction) => {
-    const bearer = req.headers.authorization;
+    // Try to get token from Authorization header first, then from cookie
+    let token: string | undefined;
 
-    if(!bearer){
-        throw new UnauthorizedError("Not Authorized");
+    const bearer = req.headers.authorization;
+    if (bearer) {
+        const parts = bearer.split(" ");
+        token = parts[1];
+    } else {
+        // Fallback to cookie
+        token = req.cookies._token;
     }
 
-    const [ , token ] = bearer.split(" ");
-
     if(!token){
-        throw new UnauthorizedError("Invalid token");
+        throw new UnauthorizedError("Not Authorized");
     }
 
     try{
