@@ -83,9 +83,8 @@ if docker compose ps | grep -q "Exit"; then
     exit 1
 fi
 
-# Run database migrations
-print_status "Running database migrations..."
-docker compose exec -T backend npm run migration:run || print_warning "Migration failed or no migrations to run"
+# Note: Migrations run automatically on startup (migrationsRun: true in typeorm config)
+print_status "Migrations will run automatically on backend startup..."
 
 # Show container status
 print_status "Container status:"
