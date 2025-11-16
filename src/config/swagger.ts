@@ -16,8 +16,8 @@ const options: swaggerJsdoc.Options = {
         servers: [
             {
                 url: env.NODE_ENV === "production"
-                    ? "https://api.mossbros.com"
-                    : `http://localhost:${env.PORT || 4000}`,
+                    ? "https://api.mossbrossv.com/api/v1"
+                    : `http://localhost:${env.PORT || 4000}/api/v1`,
                 description: env.NODE_ENV === "production" ? "Production server" : "Development server",
             },
         ],
