@@ -30,3 +30,5 @@ coverage/
 # Log files
 logs/
 *.log
+
+DEPLOYMENT.md

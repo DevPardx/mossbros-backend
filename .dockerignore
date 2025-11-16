@@ -1,20 +1,16 @@
 # Dependencies
 node_modules
 npm-debug.log
-# package-lock.json  # Comentado - necesario para npm ci en Docker
+yarn-error.log
+
+# Build output
+dist
+coverage
 
 # Environment files
 .env
 .env.local
 .env.*.local
-
-# Build output
-dist
-build
-
-# Logs
-logs
-*.log
 
 # IDE
 .vscode
@@ -23,26 +19,37 @@ logs
 *.swo
 *~
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
 # Git
 .git
 .gitignore
-.github
+.gitattributes
 
 # Documentation
 README.md
 CHANGELOG
 LICENSE
+*.md
 
-# Test files
-*.test.ts
-*.spec.ts
-coverage
+# Tests
+**/*.test.ts
+**/*.spec.ts
+__tests__
+__mocks__
+
+# Logs
+logs
+*.log
 
 # Docker
 Dockerfile
-docker-compose.yml
 .dockerignore
+docker-compose*.yml
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
