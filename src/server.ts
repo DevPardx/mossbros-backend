@@ -72,14 +72,15 @@ const setupRoutes = () => {
   app.use("/api/v1/services", createServiceRoutes(serviceContainer));
   app.use("/api/v1/repair-jobs", createRepairJobRoutes(serviceContainer));
 
-  app.get("/health", (_req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
-  });
-
   app.use(errorHandler);
 
   logger.info("API documentation available at /api-docs");
 };
+
+// Health check endpoint - before CORS to allow Docker health checks
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 app.use(helmet());
 
