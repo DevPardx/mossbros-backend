@@ -16,6 +16,7 @@
         "sourceMap": true,
         "esModuleInterop": true,
         "declaration": true,
+        "removeComments": false,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "skipLibCheck": true,
