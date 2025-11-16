@@ -61,6 +61,10 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY}
       SENTRY_DSN: ${SENTRY_DSN}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+      OWNER_NAME: ${OWNER_NAME}
+      OWNER_EMAIL: ${OWNER_EMAIL}
+      OWNER_PASSWORD: ${OWNER_PASSWORD}
+      OWNER_PHONE: ${OWNER_PHONE}
     ports:
       - "127.0.0.1:${PORT:-4000}:4000"
     depends_on:
