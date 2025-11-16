@@ -1,5 +1,8 @@
 import swaggerJsdoc from "swagger-jsdoc";
+import path from "path";
 import { env } from "./env";
+
+const isProduction = env.NODE_ENV === "production";
 
 const options: swaggerJsdoc.Options = {
     definition: {
@@ -15,10 +18,10 @@ const options: swaggerJsdoc.Options = {
         },
         servers: [
             {
-                url: env.NODE_ENV === "production"
-                    ? "https://api.mossbros.com"
-                    : `http://localhost:${env.PORT || 4000}`,
-                description: env.NODE_ENV === "production" ? "Production server" : "Development server",
+                url: isProduction
+                    ? "https://api.mossbrossv.com/api/v1"
+                    : `http://localhost:${env.PORT || 4000}/api/v1`,
+                description: isProduction ? "Production server" : "Development server",
             },
         ],
         components: {
@@ -198,7 +201,23 @@ const options: swaggerJsdoc.Options = {
             },
         ],
     },
-    apis: ["./src/routes/*.ts"],
+    apis: isProduction
+        ? [
+            path.join(__dirname, "../routes/auth.js"),
+            path.join(__dirname, "../routes/brands.js"),
+            path.join(__dirname, "../routes/customers.js"),
+            path.join(__dirname, "../routes/models.js"),
+            path.join(__dirname, "../routes/repairJobs.js"),
+            path.join(__dirname, "../routes/services.js"),
+        ]
+        : ["./src/routes/*.ts"],
 };
 
+console.log("[Swagger] Environment:", env.NODE_ENV);
+console.log("[Swagger] Is Production:", isProduction);
+console.log("[Swagger] APIs:", options.apis);
+
 export const swaggerSpec = swaggerJsdoc(options);
+
+const paths = (swaggerSpec as Record<string, unknown>).paths || {};
+console.log("[Swagger] Total paths found:", Object.keys(paths as object).length);
