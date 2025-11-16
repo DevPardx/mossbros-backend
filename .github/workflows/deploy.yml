@@ -129,7 +129,7 @@ jobs:
           port: ${{ secrets.DROPLET_PORT || 22 }}
           script: |
             cd /home/mossbros/mossbros-backend
-            docker-compose ps
+            docker compose ps
 
       - name: Verify API is responding
         run: |

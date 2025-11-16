@@ -62,7 +62,7 @@ git pull origin main || {
 
 # Stop running containers
 print_status "Stopping running containers..."
-docker-compose down
+docker compose down
 
 # Remove old images to save space
 print_status "Removing old Docker images..."
@@ -70,33 +70,33 @@ docker image prune -f
 
 # Build and start containers
 print_status "Building and starting containers..."
-docker-compose up -d --build
+docker compose up -d --build
 
 # Wait for services to be healthy
 print_status "Waiting for services to be healthy..."
 sleep 10
 
 # Check if all containers are running
-if docker-compose ps | grep -q "Exit"; then
+if docker compose ps | grep -q "Exit"; then
     print_error "Some containers failed to start. Checking logs..."
-    docker-compose logs --tail=50
+    docker compose logs --tail=50
     exit 1
 fi
 
 # Run database migrations
 print_status "Running database migrations..."
-docker-compose exec -T backend npm run migration:run || print_warning "Migration failed or no migrations to run"
+docker compose exec -T backend npm run migration:run || print_warning "Migration failed or no migrations to run"
 
 # Show container status
 print_status "Container status:"
-docker-compose ps
+docker compose ps
 
 # Show logs
 print_status "Recent logs:"
-docker-compose logs --tail=20
+docker compose logs --tail=20
 
 echo ""
 print_status "Deployment completed successfully!"
 echo ""
-echo "To view logs, run: docker-compose logs -f"
-echo "To check status, run: docker-compose ps"
+echo "To view logs, run: docker compose logs -f"
+echo "To check status, run: docker compose ps"
