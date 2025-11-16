@@ -218,4 +218,5 @@ console.log("[Swagger] __dirname:", __dirname);
 export const swaggerSpec = swaggerJsdoc(options);
 
 // Log number of paths found
-console.log("[Swagger] Total paths found:", Object.keys(swaggerSpec.paths || {}).length);
+const paths = (swaggerSpec as Record<string, unknown>).paths || {};
+console.log("[Swagger] Total paths found:", Object.keys(paths as object).length);
