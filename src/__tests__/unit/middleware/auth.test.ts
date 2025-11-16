@@ -194,7 +194,7 @@ describe("Authentication Middleware", () => {
           mockResponse as Response,
           mockNext
         )
-      ).rejects.toThrow("Invalid token");
+      ).rejects.toThrow("Not Authorized");
     });
 
     it("should throw UnauthorizedError when token verification fails", async () => {
