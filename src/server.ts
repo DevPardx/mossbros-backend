@@ -72,25 +72,17 @@ const setupRoutes = () => {
   logger.info("API documentation available at /api-docs");
 };
 
-// Health check endpoint - before CORS to allow Docker health checks
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Serve Swagger JSON spec - before CORS
-app.get("/api-docs.json", (_req, res) => {
-  res.setHeader("Content-Type", "application/json");
-  res.send(swaggerSpec);
-});
-
-// Swagger documentation - before CORS to allow public access
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: ".swagger-ui .topbar { display: none }",
   customSiteTitle: "MossBros Taller API Docs",
 }));
 
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP to allow Swagger UI inline scripts
+  contentSecurityPolicy: false,
 }));
 
 app.use(compression());
