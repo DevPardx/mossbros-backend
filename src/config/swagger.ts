@@ -201,22 +201,28 @@ const options: swaggerJsdoc.Options = {
             },
         ],
     },
-    apis: [
-        isProduction
-            ? path.join(__dirname, "../routes/*.js")
-            : path.join(process.cwd(), "src/routes/*.ts")
-    ],
+    apis: isProduction
+        ? [
+            path.join(__dirname, "../routes/auth.js"),
+            path.join(__dirname, "../routes/brands.js"),
+            path.join(__dirname, "../routes/customers.js"),
+            path.join(__dirname, "../routes/models.js"),
+            path.join(__dirname, "../routes/repairJobs.js"),
+            path.join(__dirname, "../routes/services.js"),
+        ]
+        : [path.join(process.cwd(), "src/routes/*.ts")],
 };
 
 // Log the path being used for debugging
 console.log("[Swagger] Environment:", env.NODE_ENV);
-console.log("[Swagger] Scanning path:", isProduction
-    ? path.join(__dirname, "../routes/*.js")
-    : path.join(process.cwd(), "src/routes/*.ts"));
 console.log("[Swagger] __dirname:", __dirname);
+console.log("[Swagger] APIs to scan:", options.apis);
 
 export const swaggerSpec = swaggerJsdoc(options);
 
 // Log number of paths found
 const paths = (swaggerSpec as Record<string, unknown>).paths || {};
 console.log("[Swagger] Total paths found:", Object.keys(paths as object).length);
+if (Object.keys(paths as object).length > 0) {
+    console.log("[Swagger] Sample paths:", Object.keys(paths as object).slice(0, 5));
+}
